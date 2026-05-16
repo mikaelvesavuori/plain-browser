@@ -1,0 +1,74 @@
+---
+title: Installation
+description: Download, run, build, and package Plain on macOS.
+---
+
+Plain is currently distributed as **Plain 1.0 Beta** for macOS. The beta is ad-hoc signed and not notarized.
+
+## Download
+
+Download the latest build from [GitHub Releases](https://github.com/mikaelvesavuori/plainview/releases/latest).
+
+Use the `.dmg` for the easiest install, or the `.zip` if you prefer the raw `.app` bundle.
+
+Each release includes `SHA256SUMS.txt` so you can verify downloaded artifacts:
+
+```sh
+shasum -a 256 -c SHA256SUMS.txt
+```
+
+## macOS Security Warning
+
+Plain is ad-hoc signed and not notarized. macOS may warn when opening a downloaded build.
+
+The app does not require an Apple Developer Program membership to build locally or distribute unsigned builds.
+
+## Run from Source
+
+From the repository root:
+
+```sh
+make run
+```
+
+or directly:
+
+```sh
+swift run Plain
+```
+
+## Build and Test
+
+Run the Swift tests:
+
+```sh
+make test
+```
+
+Run Swift tests plus claim-policy tests:
+
+```sh
+make test-all
+```
+
+## Package Locally
+
+Build the app, ZIP, and DMG:
+
+```sh
+make package
+```
+
+For a faster local packaging smoke build:
+
+```sh
+make package-fast
+```
+
+For packaging with claim tests enabled:
+
+```sh
+make package-claims
+```
+
+Packaged builds include App Sandbox and network-client entitlements.

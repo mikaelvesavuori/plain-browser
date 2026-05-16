@@ -1,0 +1,9 @@
+.build/
+dist/
+DerivedData/
+packaging/AppIcon.iconset/
+node_modules/
+.astro/
+benchmarks/results/*
+.DS_Store
+.vscode

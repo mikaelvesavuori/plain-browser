@@ -1,0 +1,25 @@
+{
+  "name": "plain-docs",
+  "type": "module",
+  "version": "1.0.0",
+  "private": true,
+  "description": "The documentation site for Plain.",
+  "author": "Plain",
+  "license": "MIT",
+  "scripts": {
+    "dev": "astro dev",
+    "start": "astro dev",
+    "build": "astro check && astro build",
+    "preview": "astro preview",
+    "astro": "astro"
+  },
+  "dependencies": {
+    "@astrojs/check": "latest",
+    "@astrojs/starlight": "latest",
+    "astro": "latest",
+    "typescript": "5"
+  },
+  "overrides": {
+    "yaml": "^2.8.3"
+  }
+}

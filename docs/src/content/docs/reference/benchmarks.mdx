@@ -1,0 +1,139 @@
+---
+title: Benchmarks and Claims
+description: The benchmark harness and the policy for public performance, memory, and power claims.
+---
+
+Plain has a repeatable benchmark harness for careful performance, resource-use, and claim-support work.
+
+## What Plain Measures
+
+The native Plain benchmark measures:
+
+- time from URL input to extracted `DocumentModel`
+- HTML fetch time and HTML response bytes
+- image fetch time and image bytes
+- request count from Plain's own fetch pipeline
+- CPU time consumed by the benchmark process
+- resident memory during the run
+- extraction quality and element/image counts
+
+The optional browser baseline measures:
+
+- full browser page load time with JavaScript enabled
+- request count
+- approximate transfer bytes
+- script bytes from browser resource timing
+- third-party request host count
+- resident memory for the browser process tree after load
+- paint/navigation timing where available
+
+## Run Plain Benchmarks
+
+```sh
+swift run PlainBench -- --urls benchmarks/urls.txt --iterations 3 --mode both --out benchmarks/results/plainview.json
+```
+
+This writes:
+
+- `benchmarks/results/plainview.json`
+- `benchmarks/results/plainview.md`
+
+## Run Browser Baseline
+
+Install the optional Node benchmark dependency:
+
+```sh
+make deps
+```
+
+Then run:
+
+```sh
+make bench-browser
+```
+
+or directly:
+
+```sh
+node benchmarks/browser-baseline.mjs --urls benchmarks/urls.txt --iterations 3 --browser chromium --out benchmarks/results/browser-chromium.json
+```
+
+## Compare Reports
+
+For a quick local smoke run:
+
+```sh
+make bench-smoke
+```
+
+Or compare existing reports directly:
+
+```sh
+node benchmarks/compare.mjs \
+  --plainview benchmarks/results/plainview.json \
+  --browser benchmarks/results/browser-chromium.json \
+  --out benchmarks/results/comparison.json \
+  --policy smoke
+```
+
+## Marketing Claim Gate
+
+Public performance/resource claims must pass the marketing gate:
+
+```sh
+make bench-marketing
+```
+
+The gate uses `benchmarks/urls-marketing.txt`, 3 iterations, Chromium as the browser baseline, validates the report, publishes tracked evidence artifacts, and updates the README claim block.
+
+The gate fails unless the comparison has:
+
+- at least 20 unique URLs
+- at least 3 iterations
+- at least 95% paired successful URL/iteration runs for each comparative claim
+- Plain/browser reports captured within 24 hours of each other
+- a comparison report generated within the last 30 days
+- at least 50% fewer text-only bytes, 50% fewer text-only requests, and 30% fewer image-mode bytes for those respective claims
+- at least 30% lower text-only and image-mode median load/render time for those respective speed claims
+- optional resident-memory claims approved only when both reports include memory samples and Plain shows at least 30% lower median resident memory after load
+
+## Power Measurement Gate
+
+Power claims are separate from performance/resource claims. They require macOS `powermetrics`, which must run as superuser:
+
+```sh
+sudo make bench-power-measure
+make bench-power-postprocess
+```
+
+The power gate fails unless the report has:
+
+- at least 20 unique URLs and 3 iterations
+- at least 10 `powermetrics` samples for idle, Plain, and Chromium
+- environment metadata, including browser version and power status
+- at least 30% lower idle-adjusted estimated SoC energy for Plain
+
+Use only qualified language such as "idle-adjusted estimated SoC energy in this local measured run." Do not turn this into broad "green", "eco-friendly", "battery-saving", or cross-device claims.
+
+## Claim Discipline
+
+Good claims:
+
+- "Across this benchmark set, Plain text-only downloaded X% fewer bytes than Chromium."
+- "Across this benchmark set, Plain made X% fewer network requests than Chromium."
+- "Across this benchmark set, Plain used X% less resident memory than Chromium after load."
+- "Plain executes 0 page JavaScript by design."
+
+Claims to avoid:
+
+- "Plain is green."
+- "Plain is eco-friendly."
+- "Plain uses less battery" unless measured directly on battery with an approved battery-drain protocol.
+- "Plain is always faster than browsers."
+- "Plain is more secure than Safari/Chrome."
+
+Run the claim policy tests before release:
+
+```sh
+make test-all
+```

@@ -1,0 +1,39 @@
+---
+title: Reporting Page Issues
+description: How to report pages that extract poorly or behave unexpectedly.
+---
+
+Plain rebuilds real-world HTML into a native document. Some pages will always need extractor work because the web is inconsistent.
+
+If a readable page looks wrong, use **More > Report Page Issue** in the app.
+
+You can also email [hello@browseplain.com](mailto:hello@browseplain.com) or open a [GitHub issue](https://github.com/mikaelvesavuori/plainview/issues/new).
+
+## Useful Reports
+
+Good reports include:
+
+- page URL
+- what looked wrong
+- what you expected
+- whether images were enabled
+- screenshot if useful
+
+## Regression Fixtures
+
+When a report exposes a repeatable extraction problem, reduce it into a small fixture under `Tests/PlainCoreTests/Fixtures/ExtractionRegression` and add expectations in `ExtractionRegressionTests.swift`.
+
+Fixtures should preserve the markup pattern that broke Plain while removing unrelated site content.
+
+## Common Cases
+
+Report issues when:
+
+- important text is missing
+- unrelated navigation or footer text dominates the page
+- images appear as empty frames
+- links are present but poorly grouped
+- search results or pagination are malformed
+- a page should be readable but fails entirely
+
+Do not report pages that clearly require a full JavaScript app runtime unless Plain's handoff behavior is confusing.

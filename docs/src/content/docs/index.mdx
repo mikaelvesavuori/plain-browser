@@ -1,0 +1,45 @@
+---
+title: Plain
+description: Plain 1.0 Beta is a small macOS browser for reading the web without turning every page into an app.
+template: splash
+hero:
+  tagline: Plain 1.0 Beta is a small macOS browser for reading the web without turning every page into an app.
+  image:
+    light: ../../assets/logo.png
+    dark: ../../assets/logo.png
+  actions:
+    - text: Get Started
+      link: /getting-started/intro
+      icon: rocket
+    - text: Installation
+      link: /getting-started/installation
+      icon: laptop
+---
+
+import { Card, CardGrid, LinkCard } from "@astrojs/starlight/components";
+
+<CardGrid>
+  <Card title="Getting Started" icon="open-book">
+    Learn what Plain is, where it fits, and how to install or run it.
+
+    <LinkCard title="What is Plain?" href="/getting-started/intro" />
+    <LinkCard title="Installation" href="/getting-started/installation" />
+  </Card>
+
+  <Card title="Guides" icon="puzzle">
+    Practical notes for using Plain day to day.
+
+    <LinkCard title="Using Plain" href="/guides/using-plain" />
+    <LinkCard title="Keyboard Shortcuts" href="/guides/keyboard-shortcuts" />
+    <LinkCard title="Reporting Page Issues" href="/guides/report-page-issues" />
+  </Card>
+
+  <Card title="Reference" icon="document">
+    Product boundaries, privacy, architecture, packaging, and evidence.
+
+    <LinkCard title="Privacy and Security" href="/reference/privacy-security" />
+    <LinkCard title="Architecture" href="/reference/architecture" />
+    <LinkCard title="Benchmarks and Claims" href="/reference/benchmarks" />
+    <LinkCard title="Release and Packaging" href="/reference/release-packaging" />
+  </Card>
+</CardGrid>

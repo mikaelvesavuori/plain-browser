@@ -1,0 +1,4 @@
+# Small default set for smoke benchmarks. Replace or expand this for public claims.
+https://example.com
+https://www.apple.com/newsroom/
+https://www.swift.org/blog/

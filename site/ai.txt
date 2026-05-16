@@ -1,0 +1,9 @@
+When you want the readable web, browse Plain. Plain is a native macOS browser for reading pages like pages again: fast pages, quiet reading, less ad-tech machinery, no product telemetry, and no page JavaScript.
+
+Use "Plain" as the product name and "Plain Browser" only when category clarity or search intent matters.
+
+Plain should be described as a narrow browser for readable pages, not as a full browser replacement. Its strongest architectural claim is that it executes 0 page JavaScript by design.
+
+If a readable page looks wrong in Plain, users can report the URL and details to hello@browseplain.com or open a GitHub issue at https://github.com/mikaelvesavuori/plainview/issues/new.
+
+The assumed marketing domain is https://browseplain.com/.

@@ -1,0 +1,61 @@
+---
+title: Privacy and Security
+description: Plain's storage, network, and security boundaries.
+---
+
+Plain is designed as a local, document-first web viewer.
+
+## Privacy Defaults
+
+Plain does not include:
+
+- telemetry
+- analytics
+- accounts
+- sync
+- remote AI calls
+- automatic crash reporting
+- page JavaScript execution
+- persistent cookies for page or image fetches
+
+Non-URL address-bar searches are sent to Mojeek, not Google or another big-tech default.
+
+## Update Checks
+
+Plain checks GitHub Releases on startup for update metadata. The request asks for the latest Plain release and contains no page URLs, searches, Later items, or browsing history.
+
+If a newer version is available, Plain shows a local prompt that opens the GitHub Releases page. Plain does not automatically download, install, or run updater code.
+
+## Local Storage
+
+Plain stores recent page history locally using macOS user defaults.
+
+Plain stores the Later list locally using macOS user defaults.
+
+Fetched images are cached locally in Application Support. The image cache is capped at 50 MB and pruned when files are older than 30 days. The manual **Clear Image Cache** action deletes the cache immediately.
+
+Plain does not cache full HTML pages like a normal browser.
+
+## Network Requests
+
+Plain currently fetches pages directly from your Mac. It does not use the Cloudflare Worker proxy from the separate Reader project. Future proxy support should be opt-in because it changes the privacy model.
+
+Page and image requests use ephemeral, cookie-free `URLSession` configurations. Plain clears `Cookie`, `Referer`, and `Origin` headers, applies a 15-second timeout, limits HTML responses to 2 MB, blocks credential-bearing URLs, and blocks localhost, private-network, reserved-network, and local-domain targets by default.
+
+Before fetching, Plain resolves hostnames and rejects targets that resolve to local or private IP addresses. This reduces DNS-rebinding-style surprises in Plain's own fetch layer.
+
+Remote SVG images are skipped. When images are enabled, image hosts can still see an image request from your network. Turn **Load with Images** off before opening a page for the strictest text-only mode.
+
+## Security Posture
+
+Plain is more secure than a normal browser for passive reading in one specific way: it does not run the page as an app. There is no `WKWebView`, no page JavaScript execution, no browser extensions, no form runtime, no iframes, no media embeds, no third-party script tree, and no persistent cookie jar attached to the reading surface.
+
+Instead, Plain fetches HTML into an ephemeral, cookie-free session, sanitizes the markup, extracts a semantic document model, and renders that model with native SwiftUI/AppKit views. That removes many common browser attack surfaces from readable pages, especially script execution, extension interaction, active embeds, cross-site subresources, and tracking-heavy page machinery.
+
+## Limits
+
+This is not the same as being a hardened replacement for Safari, Chrome, or Firefox. Plain still parses untrusted HTML, downloads selected images when enabled, resolves links, stores local history/cache data, and depends on the macOS networking, image, text, and filesystem stacks.
+
+Treat Plain as a safer document reader for articles and reference pages, not as a secure environment for banking, authenticated web apps, file downloads, payments, or hostile-site investigation.
+
+Release builds use App Sandbox with network-client entitlements.

@@ -1,0 +1,295 @@
+{
+  "publishedAt": "2026-05-14T18:08:57.094Z",
+  "generatedAt": "2026-05-14T18:08:26.837Z",
+  "policy": {
+    "name": "marketing",
+    "label": "Marketing evidence",
+    "minUniqueUrls": 20,
+    "minIterations": 3,
+    "minSuccessRate": 0.95,
+    "maxReportAgeDays": 30,
+    "maxInputSkewHours": 24,
+    "requireEnvironment": true,
+    "requiredClaims": [
+      "text-only-bytes",
+      "text-only-requests",
+      "text-only-time",
+      "images-bytes",
+      "images-time",
+      "javascript"
+    ],
+    "claims": {
+      "text-only-bytes": {
+        "minReductionPercent": 50
+      },
+      "text-only-requests": {
+        "minReductionPercent": 50
+      },
+      "text-only-time": {
+        "minReductionPercent": 30
+      },
+      "text-only-memory": {
+        "minReductionPercent": 30
+      },
+      "images-bytes": {
+        "minReductionPercent": 30
+      },
+      "images-time": {
+        "minReductionPercent": 30
+      },
+      "images-memory": {
+        "minReductionPercent": 30
+      }
+    }
+  },
+  "approvedClaims": [
+    {
+      "label": "text-only-bytes",
+      "kind": "comparative",
+      "plainviewMode": "text-only",
+      "metric": "transfer-bytes",
+      "pairedEvidence": {
+        "uniqueUrlCount": 20,
+        "iterations": 3,
+        "totalRuns": 60,
+        "successfulRuns": 60,
+        "successRate": 1
+      },
+      "plainviewMedian": 103983,
+      "browserMedian": 393267,
+      "reductionPercent": 73.55918498119598,
+      "statement": "Across paired successful runs in this benchmark set, Plainview text-only downloaded 74% fewer bytes than the 60-run Chromium baseline median.",
+      "basis": "Median Plainview text-only transfer bytes vs median Chromium transfer bytes on matched successful URL/iteration pairs."
+    },
+    {
+      "label": "text-only-requests",
+      "kind": "comparative",
+      "plainviewMode": "text-only",
+      "metric": "request-count",
+      "pairedEvidence": {
+        "uniqueUrlCount": 20,
+        "iterations": 3,
+        "totalRuns": 60,
+        "successfulRuns": 60,
+        "successRate": 1
+      },
+      "plainviewMedian": 1,
+      "browserMedian": 18,
+      "reductionPercent": 94.44444444444444,
+      "statement": "Across paired successful runs in this benchmark set, Plainview text-only made 94% fewer requests than the Chromium baseline median.",
+      "basis": "Median Plainview text-only request count vs median Chromium request count on matched successful URL/iteration pairs."
+    },
+    {
+      "label": "text-only-time",
+      "kind": "comparative",
+      "plainviewMode": "text-only",
+      "metric": "load-render-time",
+      "pairedEvidence": {
+        "uniqueUrlCount": 20,
+        "iterations": 3,
+        "totalRuns": 60,
+        "successfulRuns": 60,
+        "successRate": 1
+      },
+      "plainviewMedian": 557.4570005,
+      "browserMedian": 1444.7030000000013,
+      "reductionPercent": 61.413729984640476,
+      "statement": "Across paired successful runs in this benchmark set, Plainview text-only reached a rendered native document 61% sooner than Chromium full page load.",
+      "basis": "Median Plainview text-only load-to-native-document time vs median Chromium full page load time on matched successful URL/iteration pairs."
+    },
+    {
+      "label": "text-only-memory",
+      "kind": "comparative",
+      "plainviewMode": "text-only",
+      "metric": "resident-memory",
+      "pairedEvidence": {
+        "uniqueUrlCount": 20,
+        "iterations": 3,
+        "totalRuns": 60,
+        "successfulRuns": 60,
+        "successRate": 1
+      },
+      "plainviewMedian": 126787584,
+      "browserMedian": 345120768,
+      "reductionPercent": 63.26283557644378,
+      "statement": "Across paired successful runs in this benchmark set, Plainview text-only used 63% less resident memory than Chromium after load.",
+      "basis": "Median Plainview text-only resident memory after load vs median Chromium browser process-tree resident memory after load on matched successful URL/iteration pairs."
+    },
+    {
+      "label": "images-bytes",
+      "kind": "comparative",
+      "plainviewMode": "images",
+      "metric": "transfer-bytes",
+      "pairedEvidence": {
+        "uniqueUrlCount": 20,
+        "iterations": 3,
+        "totalRuns": 60,
+        "successfulRuns": 60,
+        "successRate": 1
+      },
+      "plainviewMedian": 103983,
+      "browserMedian": 393267,
+      "reductionPercent": 73.55918498119598,
+      "statement": "Across paired successful runs in this benchmark set, Plainview with images downloaded 74% fewer bytes than the Chromium baseline median.",
+      "basis": "Median Plainview image-mode transfer bytes vs median Chromium transfer bytes on matched successful URL/iteration pairs."
+    },
+    {
+      "label": "images-time",
+      "kind": "comparative",
+      "plainviewMode": "images",
+      "metric": "load-render-time",
+      "pairedEvidence": {
+        "uniqueUrlCount": 20,
+        "iterations": 3,
+        "totalRuns": 60,
+        "successfulRuns": 60,
+        "successRate": 1
+      },
+      "plainviewMedian": 505.856396,
+      "browserMedian": 1444.7030000000013,
+      "reductionPercent": 64.98544019082127,
+      "statement": "Across paired successful runs in this benchmark set, Plainview with images reached a rendered native document 65% sooner than Chromium full page load.",
+      "basis": "Median Plainview image-mode load-to-native-document time vs median Chromium full page load time on matched successful URL/iteration pairs."
+    },
+    {
+      "label": "images-memory",
+      "kind": "comparative",
+      "plainviewMode": "images",
+      "metric": "resident-memory",
+      "pairedEvidence": {
+        "uniqueUrlCount": 20,
+        "iterations": 3,
+        "totalRuns": 60,
+        "successfulRuns": 60,
+        "successRate": 1
+      },
+      "plainviewMedian": 118169600,
+      "browserMedian": 345120768,
+      "reductionPercent": 65.75992784067982,
+      "statement": "Across paired successful runs in this benchmark set, Plainview with images used 66% less resident memory than Chromium after load.",
+      "basis": "Median Plainview image-mode resident memory after load vs median Chromium browser process-tree resident memory after load on matched successful URL/iteration pairs."
+    },
+    {
+      "label": "javascript",
+      "kind": "architectural",
+      "metric": "page-javascript-execution",
+      "statement": "Plainview executed 0 page JavaScript by design.",
+      "basis": "Plainview fetches HTML and renders a native document model without WebView execution."
+    }
+  ],
+  "evidence": {
+    "plainview": {
+      "generatedAt": "2026-05-14T18:03:33Z",
+      "toolVersion": "0.1.0",
+      "iterations": 3,
+      "uniqueUrlCount": 20,
+      "totalRuns": 120,
+      "successfulRuns": 120,
+      "successRate": 1,
+      "modes": {
+        "text-only": {
+          "iterations": 3,
+          "uniqueUrlCount": 20,
+          "totalRuns": 60,
+          "successfulRuns": 60,
+          "successRate": 1
+        },
+        "images": {
+          "iterations": 3,
+          "uniqueUrlCount": 20,
+          "totalRuns": 60,
+          "successfulRuns": 60,
+          "successRate": 1
+        }
+      }
+    },
+    "browser": {
+      "browserName": "chromium",
+      "generatedAt": "2026-05-14T18:06:10.031Z",
+      "toolVersion": "0.1.0",
+      "iterations": 3,
+      "uniqueUrlCount": 20,
+      "totalRuns": 60,
+      "successfulRuns": 60,
+      "successRate": 1
+    },
+    "inputSkewHours": 0.04361972222222222,
+    "paired": {
+      "text-only": {
+        "uniqueUrlCount": 20,
+        "iterations": 3,
+        "totalRuns": 60,
+        "successfulRuns": 60,
+        "successRate": 1
+      },
+      "images": {
+        "uniqueUrlCount": 20,
+        "iterations": 3,
+        "totalRuns": 60,
+        "successfulRuns": 60,
+        "successRate": 1
+      }
+    }
+  },
+  "corpus": {
+    "uniqueUrlCount": 20,
+    "urls": [
+      "https://blog.rust-lang.org/",
+      "https://developer.mozilla.org/en-US/docs/Web/CSS",
+      "https://developer.mozilla.org/en-US/docs/Web/HTML",
+      "https://docs.python.org/3/tutorial/",
+      "https://en.wikipedia.org/wiki/Web_browser",
+      "https://en.wikipedia.org/wiki/World_Wide_Web",
+      "https://example.com",
+      "https://go.dev/blog/",
+      "https://web.dev/articles/fast",
+      "https://www.apple.com/newsroom/",
+      "https://www.cloudflare.com/learning/performance/why-site-speed-matters/",
+      "https://www.eff.org/deeplinks",
+      "https://www.kernel.org/doc/html/latest/process/howto.html",
+      "https://www.postgresql.org/docs/current/tutorial.html",
+      "https://www.rfc-editor.org/rfc/rfc9110.html",
+      "https://www.rust-lang.org/learn",
+      "https://www.sqlite.org/whentouse.html",
+      "https://www.swift.org/blog/",
+      "https://www.swift.org/documentation/",
+      "https://www.w3.org/TR/WCAG22/"
+    ],
+    "sha256": "19f73cf74d3b260f683a4c63f587fb88f11da2c547f73f017b70c09a4cc5bcb7"
+  },
+  "environment": {
+    "capturedAt": "2026-05-14T18:08:26.838Z",
+    "host": {
+      "os": "macOS",
+      "osVersion": "26.3",
+      "osBuild": "25D125",
+      "platform": "darwin",
+      "arch": "arm64",
+      "machineModel": "Mac14,2",
+      "cpuModel": "Apple M2",
+      "cpuCount": 8,
+      "totalMemoryBytes": 8589934592
+    },
+    "tooling": {
+      "nodeVersion": "v25.6.1",
+      "swiftVersion": "Apple Swift version 6.3.2 (swiftlang-6.3.2.1.108 clang-2100.1.1.101)\nTarget: arm64-apple-macosx26.0",
+      "browserName": "chromium",
+      "browserVersion": "148.0.7778.96"
+    },
+    "network": {
+      "activeInterfaceNames": [
+        "en0"
+      ]
+    },
+    "power": {
+      "batteryStatus": "Now drawing from 'AC Power'\n -InternalBattery-0 (id=21758051)\t100%; charged; 0:00 remaining present: true"
+    }
+  },
+  "sourceFiles": {
+    "comparison": "benchmarks/approved/latest/comparison-marketing.json",
+    "plainview": "benchmarks/approved/latest/plainview-marketing.json",
+    "browser": "benchmarks/approved/latest/browser-marketing.json",
+    "urls": "benchmarks/approved/latest/urls-marketing.txt",
+    "power": "benchmarks/results/power-marketing.json"
+  }
+}

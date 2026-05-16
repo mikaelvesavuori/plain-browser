@@ -1,0 +1,49 @@
+---
+title: What is Plain?
+description: Plain's role, product boundary, and the kind of web it is built for.
+---
+
+Plain 1.0 Beta is a native macOS browser for readable pages.
+
+It opens URLs, follows links, searches the web, keeps local history, and supports back/forward navigation. The important difference is what happens after a page is fetched: Plain removes the active web runtime, extracts the useful text and images, and renders the result as a native SwiftUI document.
+
+Plain is built for the quieter case: you found something worth reading or following, and you want the page without the machinery around it.
+
+## Good Fit
+
+Plain is a good fit for:
+
+- articles
+- documentation
+- essays
+- blogs
+- recipes
+- reference pages
+- research material
+- mostly textual sites
+- search-result browsing and link-following workflows
+
+## Wrong Fit
+
+Plain is intentionally narrow. Use your regular browser for:
+
+- banking
+- shopping carts
+- rich editors
+- SaaS dashboards
+- social feeds
+- complex login flows
+- video apps
+- pages that only exist after JavaScript runs
+
+Plain should make this product boundary visible. When a page needs a full browser runtime, use **Open in Default Browser**.
+
+## Search
+
+When address-bar input is not a URL, Plain searches with Mojeek rather than Google or another big-tech default. Plain also cleans Mojeek search result pages into native search results when possible.
+
+## What Plain Does Not Do
+
+Plain does not run page JavaScript, keep a persistent cookie jar, support browser extensions, preserve full CSS layout, or try to become a general-purpose browser.
+
+That limitation is the point. Plain treats HTML as source material for a readable native document, not as an app to execute.

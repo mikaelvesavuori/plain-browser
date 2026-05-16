@@ -1,0 +1,93 @@
+---
+title: Release and Packaging
+description: How Plain builds macOS app, ZIP, and DMG artifacts.
+---
+
+Plain releases are built from version tags.
+
+## Local Packaging
+
+Build the app, ZIP, and DMG:
+
+```sh
+make package
+```
+
+Package with claim tests enabled:
+
+```sh
+make package-claims
+```
+
+Package quickly for local smoke testing:
+
+```sh
+make package-fast
+```
+
+## Release Tags
+
+Publish a versioned GitHub Release with:
+
+```sh
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+The release workflow builds the app on macOS, derives `CFBundleShortVersionString` and artifact names from the tag, and uploads the `.dmg`, `.zip`, and `SHA256SUMS.txt` as release assets.
+
+## CI Policy
+
+Push and pull-request CI runs deterministic checks only:
+
+- Swift tests
+- benchmark claim-policy unit tests
+- docs build
+
+It does not run measured browser comparisons or power measurements. Those remain explicit local/manual benchmark workflows because the results depend on hardware, runner load, browser state, and measurement conditions.
+
+Version tags run the stronger release path: docs build plus the claim-aware package build that produces `.app`, `.zip`, `.dmg`, and checksums.
+
+## Update Checks
+
+Plain performs a lightweight startup check against the repository's latest GitHub Release. If the latest release tag is newer than the packaged app's `CFBundleShortVersionString`, Plain shows a prompt linking to the release page.
+
+The beta does not include automatic downloads or in-app installation. Users update manually from GitHub Releases.
+
+## Current Beta Includes
+
+- native SwiftUI macOS app bundle
+- URL input and page loading
+- non-URL address-bar searches through Mojeek
+- clean native rendering for Mojeek search results when possible
+- HTML fetch, sanitize, semantic extraction, and native rendering
+- local non-SVG image fetching and bounded cache
+- back/forward navigation
+- swipe back/forward navigation
+- recent pages
+- Later list and Markdown export
+- find in page
+- reader text scaling and serif/sans font switching
+- light/dark/system appearance controls
+- auto-hiding top navigation bar
+- keyboard shortcuts for navigation, find, text settings, images, copying, reload, and fullscreen
+- copy clean text
+- copy Markdown
+- clear history
+- clear image cache
+- Open in Default Browser
+- `plain://open?url=<encoded-url>` handoff support, with legacy `plainview://` accepted
+- local/private/reserved-network URL blocking inspired by the Reader Worker safety envelope
+- DNS/IP resolution checks before page and image fetches
+- 15-second HTML fetch timeout and 2 MB HTML response limit
+- basic UI chrome and decorative image filtering during extraction
+- ephemeral, cookie-free page and image fetch sessions
+- App Sandbox and network-client entitlements in packaged builds
+- benchmark comparison tooling with marketing claim gates for performance, memory, power, and the no-page-JavaScript architecture claim
+
+## Known Limitations
+
+- the app is ad-hoc signed, not Developer ID signed or notarized
+- macOS may warn users when opening downloaded builds
+- extraction is intentionally limited and will fail on JavaScript-heavy sites
+- no full CSS rendering, tabs, accounts, sync, JavaScript execution, or browser-extension support

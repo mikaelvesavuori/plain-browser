@@ -1,0 +1,33 @@
+# Plain
+
+Plain, also called Plain Browser when category clarity is needed, is a native macOS browser for reading pages like pages again. Its lead line is: "When you want the readable web, browse Plain."
+
+Canonical site: https://browseplain.com/
+Assumed domain: browseplain.com
+Source and releases: https://github.com/mikaelvesavuori/plainview
+
+## Summary
+
+Plain fetches HTML, removes the active web runtime, extracts useful text and images, and renders the result as a native macOS document. It is intended for fast, quiet reading, research, documentation, blogs, articles, recipes, reference pages, and mostly textual websites.
+
+Plain is not a full replacement for Safari, Chrome, Firefox, or other general-purpose browsers. It is intentionally narrow and should hand pages that need a full web-app runtime to the user's default browser.
+
+## Key Claims
+
+- Plain executes 0 page JavaScript by design.
+- Plain has no telemetry, analytics, account system, sync, or remote AI calls.
+- Plain removes much of the ad-tech, tracking, embed, frame, and pop-up machinery around readable pages.
+- Page and image requests use ephemeral, cookie-free URLSession configurations.
+- Non-URL address-bar searches are sent to Mojeek instead of Google or another big-tech default.
+- Plain used 36% less idle-adjusted estimated SoC energy than Chromium in the measured local power run.
+- Current benchmark-backed marketing claims were captured on May 14, 2026 against Chromium on a 20-URL corpus with 3 iterations per URL.
+
+## Product Boundary
+
+Good fit: articles, blogs, essays, documentation, forums, recipes, reference pages, research material, and link-following workflows.
+
+Wrong fit: banking, shopping carts, rich editors, SaaS dashboards, social feeds, complex login flows, video apps, and JavaScript-only pages.
+
+## Reporting Page Issues
+
+Readable-page extraction depends on real-world HTML and will improve through examples. If a readable page looks wrong, users should report the URL, what looked wrong, and a screenshot if useful to hello@browseplain.com or https://github.com/mikaelvesavuori/plainview/issues/new.

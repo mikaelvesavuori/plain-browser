@@ -1,0 +1,69 @@
+---
+title: Architecture
+description: How Plain fetches pages, extracts documents, and renders without a WebView.
+---
+
+Plain has two main pieces:
+
+- `Plain`, the native macOS SwiftUI app
+- `PlainCore`, the document pipeline and reusable policy code
+
+## Page Pipeline
+
+The pipeline is:
+
+1. Normalize the address input.
+2. Reject unsupported or unsafe URLs.
+3. Fetch HTML with a privacy-oriented request policy.
+4. Sanitize active and unsafe markup.
+5. Extract a semantic `DocumentModel`.
+6. Optionally fetch non-SVG images through Plain's image pipeline.
+7. Render the model with native SwiftUI/AppKit views.
+
+Plain does not render pages through `WKWebView`.
+
+## URL Policy
+
+URL normalization:
+
+- adds `https://` for domain-like inputs
+- keeps supported relative URLs when there is a base URL
+- turns bare search text into a Mojeek query
+- strips common tracking parameters
+- rejects unsupported schemes
+
+Safety validation blocks credential-bearing URLs, localhost, private ranges, reserved ranges, and local-domain targets.
+
+## Sanitization
+
+Plain removes scripts, styles, forms, iframes, canvas, media embeds, hidden elements, unsafe URL attributes, event handlers, and obvious tracking pixels before building the document model.
+
+Inert JSON-LD metadata may be preserved for extraction.
+
+## Rendering
+
+The app renders native document elements:
+
+- headings
+- paragraphs
+- inline links and emphasis
+- lists
+- block quotes
+- code blocks
+- simple tables
+- figures and captions
+- search result cards
+
+The output intentionally does not preserve full CSS layout. Plain rebuilds readable content, not full pages.
+
+## Local App State
+
+Plain keeps:
+
+- recent pages
+- Later list
+- reader settings
+- bounded image cache
+- DNS/IP resolution checks before page and image fetches
+
+The image cache is capped at 50 MB and pruned after 30 days.

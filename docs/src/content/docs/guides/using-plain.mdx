@@ -1,0 +1,69 @@
+---
+title: Using Plain
+description: The main controls and everyday flows in the app.
+---
+
+Plain is built around a single reading surface and a compact top toolbar.
+
+## Open a Page
+
+Use the address bar for both URLs and searches.
+
+- URL-like input opens as a page.
+- Non-URL input searches Mojeek.
+- `Cmd-L` focuses the address bar.
+- `Esc` dismisses address-bar focus.
+
+## Navigate
+
+Use the back and forward toolbar buttons, keyboard shortcuts, or horizontal swipes.
+
+Use **More → Show History** or `Cmd-Y` to return to the start screen and browse recent pages without closing the window.
+
+Plain keeps navigation local to the current window. It does not support tabs.
+
+## Images
+
+Plain can load selected non-SVG document images through its own image pipeline. Turn **Load with Images** off from the More menu before loading a page for true text-only loading.
+
+Fetched images are cached locally in Application Support, capped at 50 MB, and pruned after 30 days. When images are enabled, image hosts can still see an image request from your network.
+
+## Later
+
+Later is a small local list of pages you may want to return to.
+
+- Use the bookmark button or `Cmd-D` to save or remove the current page.
+- Use the Later list button or `Shift-Cmd-D` to open the list.
+- Export Later from the More menu when you want a Markdown copy.
+
+Later is deliberately small and local. It is not an account, sync service, or read-it-later platform.
+
+## Appearance and Reading Controls
+
+The toolbar includes quick controls for:
+
+- light/dark appearance toggle
+- serif/sans reader font toggle
+- reader text size cycle
+- fullscreen
+
+The More menu also includes system/light/dark appearance options because the toolbar toggle intentionally moves only between light and dark.
+
+## Copying
+
+Use the More menu to copy:
+
+- clean text
+- Markdown
+
+Plain copies the extracted native document, not the original HTML page.
+
+## When a Page Needs More Browser
+
+Use **Open in Default Browser** for pages that need forms, dashboards, login flows, video apps, or a full JavaScript runtime.
+
+## Updates
+
+Plain checks GitHub Releases on startup. If a newer version exists, it shows a small prompt that opens the release page.
+
+Updates are manual in the beta. Plain does not silently download or install new versions.

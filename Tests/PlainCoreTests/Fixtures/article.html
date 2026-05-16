@@ -1,0 +1,39 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Plain Test Article</title>
+    <meta property="og:site_name" content="Example Journal">
+    <meta name="author" content="A. Writer">
+    <meta property="article:published_time" content="2026-05-14T08:30:00Z">
+    <meta name="description" content="A compact fixture for the reader pipeline.">
+    <meta property="og:image" content="/images/hero.jpg">
+    <script>window.evil = true;</script>
+    <style>body { display: none; }</style>
+  </head>
+  <body>
+    <header>Navigation should go away</header>
+    <article>
+      <h1>Plain Test Article</h1>
+      <p onclick="track()">This is <strong>strong</strong>, <em>calm</em>, and <code>native</code> text with a <a href="/next?utm_source=x">link</a>.</p>
+      <figure>
+        <img src="/images/plainview.png" alt="Reader screenshot" width="640" height="360">
+        <figcaption>A native reader view.</figcaption>
+      </figure>
+      <blockquote>
+        <p>HTML is source material.</p>
+      </blockquote>
+      <ul>
+        <li>Text</li>
+        <li>Images</li>
+      </ul>
+      <pre><code class="language-swift">let idea = "quiet web"</code></pre>
+      <table>
+        <tr><th>Phase</th><th>Status</th></tr>
+        <tr><td>Fetch</td><td>Ready</td></tr>
+      </table>
+      <img src="/pixel.gif" width="1" height="1" alt="tracking pixel">
+      <a href="javascript:alert('nope')">bad link</a>
+    </article>
+    <footer>Footer should go away</footer>
+  </body>
+</html>

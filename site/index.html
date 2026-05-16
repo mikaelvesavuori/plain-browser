@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Plain | When you want the readable web</title>
+    <meta name="description"
+      content="When you want the readable web, browse Plain. Plain is a native macOS browser for fast, quiet pages with no page scripts, no product telemetry, and less estimated energy use in measured runs.">
+    <meta name="robots" content="index, follow, max-image-preview:large">
+    <meta name="theme-color" content="#fbf9ff">
+    <link rel="canonical" href="https://browseplain.com/">
+    <link rel="icon" type="image/png" sizes="128x128" href="assets/plain-icon-128.png">
+    <link rel="apple-touch-icon" sizes="512x512" href="assets/plain-icon-512.png">
+    <link rel="stylesheet" href="styles/styles.css">
+
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Plain">
+    <meta property="og:url" content="https://browseplain.com/">
+    <meta property="og:title" content="Plain | When you want the readable web">
+    <meta property="og:description"
+      content="When you want the readable web, browse Plain: fast pages, quiet native documents, and less app machinery around the text.">
+    <meta property="og:image" content="https://browseplain.com/assets/plain-browser-og-v2.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="Plain product preview showing a cleaned native reading page.">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Plain | When you want the readable web">
+    <meta name="twitter:description"
+      content="When you want the readable web, browse Plain: fast pages, quiet native documents, and less app machinery around the text.">
+    <meta name="twitter:image" content="https://browseplain.com/assets/plain-browser-og-v2.png">
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "Organization",
+          "@id": "https://browseplain.com/#organization",
+          "name": "Plain",
+          "alternateName": "Plain Browser",
+          "url": "https://browseplain.com/",
+          "logo": "https://browseplain.com/assets/plain-icon-512.png"
+        },
+        {
+          "@type": "WebSite",
+          "@id": "https://browseplain.com/#website",
+          "name": "Plain",
+          "url": "https://browseplain.com/",
+          "publisher": {
+            "@id": "https://browseplain.com/#organization"
+          }
+        },
+        {
+          "@type": "SoftwareApplication",
+          "@id": "https://browseplain.com/#software",
+          "name": "Plain",
+          "alternateName": "Plain Browser",
+          "url": "https://browseplain.com/",
+          "softwareVersion": "1.0 Beta",
+          "description": "When you want the readable web, browse Plain. Plain is a native macOS browser for fast, quiet pages with no page scripts, no product telemetry, and less estimated energy use in measured runs.",
+          "applicationCategory": "BrowserApplication",
+          "operatingSystem": "macOS",
+          "softwareRequirements": "macOS on Apple silicon",
+          "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "USD",
+            "availability": "https://schema.org/InStock"
+          },
+          "publisher": {
+            "@id": "https://browseplain.com/#organization"
+          },
+          "downloadUrl": "https://github.com/mikaelvesavuori/plainview/releases/latest"
+        },
+        {
+          "@type": "FAQPage",
+          "@id": "https://browseplain.com/#faq",
+          "mainEntity": [
+            {
+              "@type": "Question",
+              "name": "Is Plain a full browser replacement?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "No. Plain is intentionally narrow. Your regular browser remains the right tool for complex web apps."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Does Plain block ads?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Plain is not an ad blocker bolted onto a browser. It removes the scripts, frames, embeds, trackers, and pop-up machinery that many ads depend on, then builds the readable document from what remains."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Does Plain support images?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Yes. Plain can fetch first-party images, or run in true text-only mode when images are off before loading."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "What happens when a page needs JavaScript?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "If a page needs forms, dashboards, login flows, or a rich runtime, Plain can hand it off to your default browser."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "What if a readable page looks wrong?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Plain improves through real page reports. Send the URL and what looked wrong to hello@browseplain.com or open a GitHub issue."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Does Plain track browsing?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "No. There is no product telemetry, account system, sync service, remote AI call, or analytics script."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Is Plain open source?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Yes. Plain is a 1.0 beta native Swift app with source available on GitHub."
+              }
+            }
+          ]
+        }
+      ]
+    }
+  </script>
+  </head>
+
+  <body>
+    <header class="site-header" aria-label="Primary">
+      <a class="brand" href="/" aria-label="Plain home">
+        <img src="assets/plain-icon-128.png" alt="" width="32" height="32">
+        <span>Plain</span>
+      </a>
+      <nav class="nav-links" aria-label="Site">
+        <a href="#idea">Why</a>
+        <a href="#privacy">Privacy</a>
+        <a href="#evidence">Evidence</a>
+        <a href="#faq">FAQ</a>
+      </nav>
+      <a class="header-cta" href="https://github.com/mikaelvesavuori/plainview/releases/latest">Download</a>
+    </header>
+
+    <main>
+      <section class="hero" aria-labelledby="hero-title">
+        <div class="hero-inner">
+          <img class="hero-icon" src="assets/plain-icon-128.png" alt="" width="72" height="72">
+          <h1 id="hero-title">Plain</h1>
+          <p class="hero-copy">When you want the readable web, browse Plain.</p>
+          <p class="hero-description">
+            Plain turns articles, docs, blogs, and references into fast, readable pages: no ad-tech, no app shell, just
+            the words, images, and links you came for.
+          </p>
+          <a class="button primary" href="https://github.com/mikaelvesavuori/plainview/releases/latest">
+            Download the beta
+          </a>
+          <p class="hero-note">
+            Plain Browser is a native Swift app for macOS.<br>It is currently ad-hoc signed and not notarized.
+          </p>
+        </div>
+      </section>
+
+      <section id="idea" class="section statement">
+        <h2>The old web was mostly pages.</h2>
+        <p>
+          You clicked, it loaded, you read, you followed the next link. Plain is built for that older rhythm: HTML as
+          source material, the active app layer stripped away, the useful part rebuilt as a native macOS document.
+        </p>
+      </section>
+
+      <section class="section product" aria-label="Plain reader preview">
+        <figure>
+          <img src="assets/plain-browser-example-with-bar.png"
+            alt="Plain preview showing a macOS browser window rendering a readable page as a native document."
+            width="2384" height="1622" loading="lazy" decoding="async">
+        </figure>
+      </section>
+
+      <section id="privacy" class="section principles" aria-labelledby="privacy-title">
+        <h2 id="privacy-title">Faster, lighter, more private.</h2>
+        <div class="principle-list">
+          <article>
+            <h3>Pages, not little apps.</h3>
+            <p>Once Plain has the readable page, there is no page script left alive in the background.</p>
+          </article>
+          <article>
+            <h3>Less ad-tech surface.</h3>
+            <p>Scripts, frames, embeds, trackers, and pop-up machinery are left outside the reading surface.</p>
+          </article>
+          <article>
+            <h3>Faster, smaller, lighter.</h3>
+            <p>
+              In measured runs against Chromium, Plain reached a native document sooner, fetched fewer bytes, and used
+              less
+              estimated energy.
+            </p>
+          </article>
+        </div>
+      </section>
+
+      <section class="section fit" aria-labelledby="fit-title">
+        <h2 id="fit-title">Made for pages you read.</h2>
+        <p>
+          Plain is for articles, docs, essays, recipes, references, blogs, and the next useful link. It is the wrong
+          tool
+          for banking, shopping carts, editors, social feeds, video apps, and JavaScript-only pages. Open those in your
+          regular browser.
+        </p>
+      </section>
+
+      <section id="evidence" class="section evidence" aria-labelledby="evidence-title">
+        <h2 id="evidence-title">A measurable difference.</h2>
+        <p>
+          In the current local benchmark gate against Chromium, Plain text-only reached a native document 61% sooner,
+          fetched 74% fewer bytes, made one median request, executed zero page-script bytes, used 36% less idle-adjusted
+          estimated SoC energy in the measured power run, and packaged in an arm64 beta DMG of about 4.5 MB.
+        </p>
+        <p class="evidence-note">
+          Benchmark and power evidence: 20 URLs, 3 iterations per URL, captured May 14, 2026. Comparative local
+          measurements, not a promise that every page is always faster or lower energy.
+        </p>
+      </section>
+
+      <section id="faq" class="section questions" aria-labelledby="questions-title">
+        <h2 id="questions-title">FAQ</h2>
+        <div class="faq-list">
+          <details class="faq-item">
+            <summary>Is Plain a full browser replacement?</summary>
+            <p>No. Plain is intentionally narrow. Your regular browser remains the right tool for complex web apps.</p>
+          </details>
+          <details class="faq-item">
+            <summary>Does Plain block ads?</summary>
+            <p>
+              Plain is not an ad blocker bolted onto a browser. It removes the scripts, frames, embeds, trackers, and
+              pop-up machinery that many ads depend on, then builds the readable document from what remains.
+            </p>
+          </details>
+          <details class="faq-item">
+            <summary>Does Plain support images?</summary>
+            <p>Yes. Plain can fetch first-party images, or run in true text-only mode when images are off before
+              loading.</p>
+          </details>
+          <details class="faq-item">
+            <summary>What happens when a page needs JavaScript?</summary>
+            <p>If a page needs forms, dashboards, login flows, or a rich runtime, Plain can hand it off to your default
+              browser.</p>
+          </details>
+          <details class="faq-item">
+            <summary>What if a readable page looks wrong?</summary>
+            <p>
+              Use Plain's Report Page Issue action, email <a
+                href="mailto:hello@browseplain.com">hello@browseplain.com</a>,
+              or open a <a href="https://github.com/mikaelvesavuori/plainview/issues/new">GitHub issue</a>. The most
+              useful
+              reports include the page URL, what looked wrong, and a screenshot if possible.
+            </p>
+          </details>
+          <details class="faq-item">
+            <summary>Does Plain track browsing?</summary>
+            <p>No. There is no product telemetry, account system, sync service, remote AI call, or analytics script.</p>
+          </details>
+          <details class="faq-item">
+            <summary>Is Plain open source?</summary>
+            <p>
+              Yes. Plain is a 1.0 beta native Swift app with source available on
+              <a href="https://github.com/mikaelvesavuori/plainview">GitHub</a>.
+            </p>
+          </details>
+        </div>
+      </section>
+
+      <section class="final-cta" aria-labelledby="final-title">
+        <h2 id="final-title">Browse Plain.</h2>
+        <a class="button primary" href="https://github.com/mikaelvesavuori/plainview/releases/latest">
+          Download the beta
+        </a>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <a class="footer-logo" href="/" aria-label="Plain home">
+            <img src="assets/plain-icon-128.png" alt="" width="32" height="32">
+            <span>Plain</span>
+          </a>
+          <p>When you want the readable web, browse&nbsp;Plain.</p>
+        </div>
+
+        <nav class="footer-links" aria-label="Footer">
+          <div class="footer-col">
+            <h4>Product</h4>
+            <a href="https://github.com/mikaelvesavuori/plainview/releases/latest">Download</a>
+            <a href="#evidence">Evidence</a>
+            <a href="https://github.com/mikaelvesavuori/plainview">Source</a>
+          </div>
+          <div class="footer-col">
+            <h4>Support</h4>
+            <a href="mailto:hello@browseplain.com">Email</a>
+            <a href="https://github.com/mikaelvesavuori/plainview/issues/new">Page issues</a>
+            <a href="#faq">FAQ</a>
+          </div>
+          <div class="footer-col">
+            <h4>Reference</h4>
+            <a href="https://browseplain.com/llms.txt">LLMs</a>
+            <a href="https://browseplain.com/ai.txt">AI</a>
+            <a href="https://browseplain.com/sitemap.xml">Sitemap</a>
+          </div>
+        </nav>
+      </div>
+
+      <div class="footer-bottom">
+        &copy; 2026 Plain Browser is a <a href="https://mikaelvesavuori.se">Mikael Vesavuori</a> product. Made in
+        G&ouml;teborg, Sweden.
+      </div>
+    </footer>
+  </body>
+
+</html>
