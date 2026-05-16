@@ -52,7 +52,7 @@ struct StartView: View {
             VStack(alignment: .leading, spacing: 6) {
                 Text("Plain")
                     .font(.system(size: 52, weight: .semibold, design: .serif))
-                Text("A small macOS browser for reading the web without turning every page into an app.")
+                Text("When you want the readable web, browse Plain.")
                     .font(.system(size: 16.5, weight: .medium))
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)

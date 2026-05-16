@@ -1,8 +1,26 @@
-# Plain
+<p align="center">
+  <a href="https://browseplain.com/">
+    <img src="plain-logo-256.png" width="256" height="256" alt="Plain logo">
+  </a>
+</p>
 
-Plain is a native macOS, document-first browser for the readable web. Plain is currently **Plain 1.0 Beta**.
+<h1 align="center">Plain</h1>
 
-It opens pages, follows links, searches the web, keeps history, and supports back/forward navigation. The difference is what happens after a page is fetched: Plain removes the active web runtime, extracts the useful text and images, and renders the result as a calm SwiftUI document.
+<p align="center">
+  <strong>When you want the readable web, browse Plain.</strong>
+</p>
+
+<p align="center">
+  <a href="https://browseplain.com/">Website</a>
+  ·
+  <a href="https://docs.browseplain.com/">Docs</a>
+  ·
+  <a href="https://github.com/mikaelvesavuori/plainview/releases/latest">Download the beta</a>
+</p>
+
+Plain is a native macOS, document-first browser for the readable web. Plain is currently versioned as **1.0 Beta**.
+
+It opens web pages, follows links, searches the web, keeps history, and supports back/forward navigation. The difference is what happens after a page is fetched: Plain removes the active web runtime, extracts the useful text and images, and renders the result as a calm SwiftUI document.
 
 The spirit is simpler internet: reading and navigating without the usual pile-on of tracking, privacy-invasive tactics, ads, popups, autoplaying embeds, and scripts running just because you wanted to read. Plain is still a browser in the practical sense, but it is intentionally narrow. When a page needs a full web-app runtime, Plain should say so and hand it to your default browser.
 
@@ -19,7 +37,7 @@ Plain is small by design. The current arm64 beta packages as a ~4.5 MB DMG, a ~4
 - Plain has no telemetry, no account, no sync, no remote AI calls, no automatic crash reporting, and no page JavaScript execution.
 - Plain 1.0 Beta is ad-hoc signed and not notarized, so macOS may show a first-open warning on downloaded builds.
 
-## Download Plain 1.0 Beta
+## Download Plain
 
 Download the latest macOS build from [GitHub Releases](https://github.com/mikaelvesavuori/plainview/releases/latest). Use the `.dmg` for the easiest install, or the `.zip` if you prefer the raw `.app` bundle.
 
@@ -28,6 +46,12 @@ To install the `.dmg` build:
 1. Open the downloaded `.dmg`.
 2. Drag Plain into Applications.
 3. If macOS warns on first launch, right-click Plain and choose Open.
+
+If macOS blocks the app because it is not notarized, choose **Open Anyway** from the warning dialog. You can also open **System Settings > Privacy & Security**, find the Plain warning near the bottom, and allow it there.
+
+<p>
+  <img src="open-warning.png" width="520" alt="macOS warning dialog for opening unsigned Plain.app with an Open Anyway button">
+</p>
 
 Each release includes `SHA256SUMS.txt` so you can verify the downloaded `.dmg` or `.zip`:
 

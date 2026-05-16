@@ -6,7 +6,7 @@ export default defineConfig({
   integrations: [
     starlight({
       title: "Plain Docs",
-      description: "Documentation for the small macOS browser for reading the web without turning every page into an app.",
+      description: "When you want the readable web, browse Plain.",
       favicon: "/favicon.png",
       customCss: ["./src/styles/custom.css"],
       social: [
