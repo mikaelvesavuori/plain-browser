@@ -15,7 +15,7 @@
   ·
   <a href="https://docs.browseplain.com/">Docs</a>
   ·
-  <a href="https://github.com/mikaelvesavuori/plainview/releases/latest">Download the beta</a>
+  <a href="https://github.com/mikaelvesavuori/plain-browser/releases/latest">Download the beta</a>
 </p>
 
 Plain is a native macOS, document-first browser for the readable web. Plain is currently versioned as **1.0 Beta**.
@@ -39,7 +39,7 @@ Plain is small by design. The current arm64 beta packages as a ~4.5 MB DMG, a ~4
 
 ## Download Plain
 
-Download the latest macOS build from [GitHub Releases](https://github.com/mikaelvesavuori/plainview/releases/latest). Use the `.dmg` for the easiest install, or the `.zip` if you prefer the raw `.app` bundle.
+Download the latest macOS build from [GitHub Releases](https://github.com/mikaelvesavuori/plain-browser/releases/latest). Use the `.dmg` for the easiest install, or the `.zip` if you prefer the raw `.app` bundle.
 
 To install the `.dmg` build:
 
