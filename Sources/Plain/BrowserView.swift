@@ -46,6 +46,37 @@ struct BrowserView: View {
         isToolbarVisibleByPointer || isAddressFocused || isMoreMenuPresented || isLaterPopoverPresented
     }
 
+    private var isShowingNews: Bool {
+        if case .news = viewModel.state {
+            return true
+        }
+        return false
+    }
+
+    private var canNavigateBackSurface: Bool {
+        viewModel.canGoToPreviousLaterItem || viewModel.canGoBack
+    }
+
+    private var canNavigateForwardSurface: Bool {
+        viewModel.canGoToNextLaterItem || viewModel.canGoForward
+    }
+
+    private var canUseLaterKeyNavigation: Bool {
+        !isAddressFocused &&
+            !isFindFocused &&
+            !isMoreMenuPresented &&
+            !isLaterPopoverPresented &&
+            (viewModel.canGoToPreviousLaterItem || viewModel.canGoToNextLaterItem)
+    }
+
+    private var backHelpText: String {
+        viewModel.canGoToPreviousLaterItem ? "Previous Later item" : "Back"
+    }
+
+    private var forwardHelpText: String {
+        viewModel.canGoToNextLaterItem ? "Next Later item" : "Forward"
+    }
+
     private var toolbarAnimation: Animation {
         .spring(response: 0.22, dampingFraction: 0.88)
     }
@@ -67,8 +98,8 @@ struct BrowserView: View {
 
     private var commandActions: PlainCommandActions {
         PlainCommandActions(
-            canGoBack: viewModel.canGoBack,
-            canGoForward: viewModel.canGoForward,
+            canGoBack: canNavigateBackSurface,
+            canGoForward: canNavigateForwardSurface,
             canReload: viewModel.currentURL != nil,
             canFind: viewModel.currentDocument != nil,
             canOpenInDefaultBrowser: viewModel.currentURL != nil,
@@ -96,6 +127,7 @@ struct BrowserView: View {
             saveForLater: viewModel.toggleCurrentLater,
             showLater: showLater,
             showHistory: showHistory,
+            showNews: showNews,
             exportLater: viewModel.exportLater,
             copyCleanText: viewModel.copyCleanText,
             copyMarkdown: viewModel.copyMarkdown
@@ -174,13 +206,26 @@ struct BrowserView: View {
         .background(
             NavigationSwipeMonitor(
                 isEnabled: !isAddressFocused,
-                canGoBack: viewModel.canGoBack,
-                canGoForward: viewModel.canGoForward,
+                canGoBack: canNavigateBackSurface,
+                canGoForward: canNavigateForwardSurface,
                 onBack: {
                     navigateBackWithFlair()
                 },
                 onForward: {
                     navigateForwardWithFlair()
+                }
+            )
+        )
+        .background(
+            LaterNavigationKeyMonitor(
+                isEnabled: canUseLaterKeyNavigation,
+                canGoPrevious: viewModel.canGoToPreviousLaterItem,
+                canGoNext: viewModel.canGoToNextLaterItem,
+                onPrevious: {
+                    navigatePreviousLaterWithFlair()
+                },
+                onNext: {
+                    navigateNextLaterWithFlair()
                 }
             )
         )
@@ -217,16 +262,16 @@ struct BrowserView: View {
             HStack(spacing: 4) {
                 ToolbarIconButton(
                     systemName: "chevron.left",
-                    help: "Back",
-                    isEnabled: viewModel.canGoBack
+                    help: backHelpText,
+                    isEnabled: canNavigateBackSurface
                 ) {
                     navigateBackWithFlair()
                 }
 
                 ToolbarIconButton(
                     systemName: "chevron.right",
-                    help: "Forward",
-                    isEnabled: viewModel.canGoForward
+                    help: forwardHelpText,
+                    isEnabled: canNavigateForwardSurface
                 ) {
                     navigateForwardWithFlair()
                 }
@@ -285,6 +330,14 @@ struct BrowserView: View {
                     }
                 )
                 .preferredColorScheme(appearance.preferredColorScheme)
+            }
+
+            ToolbarIconButton(
+                systemName: "newspaper",
+                help: "Plain News",
+                isActive: isShowingNews
+            ) {
+                showNews()
             }
 
             Divider()
@@ -531,6 +584,7 @@ struct BrowserView: View {
                 onRemoveLater: viewModel.removeFromLater,
                 onExportLater: viewModel.exportLater,
                 onClearLater: viewModel.clearLater,
+                onShowNews: showNews,
                 onClear: viewModel.clearHistory,
                 onDismissWelcome: {
                     hasSeenWelcome = true
@@ -552,6 +606,27 @@ struct BrowserView: View {
                 failure: failure,
                 onOpenInDefaultBrowser: viewModel.openCurrentInDefaultBrowser,
                 onReportIssue: viewModel.reportCurrentPageIssue
+            )
+        case .news:
+            PlainNewsView(
+                sources: viewModel.newsSources,
+                interestProfile: $viewModel.newsInterestProfile,
+                window: $viewModel.newsWindow,
+                digest: viewModel.newsDigest,
+                progress: viewModel.newsProgress,
+                errorMessage: viewModel.newsErrorMessage,
+                aiStatus: viewModel.newsAIStatus,
+                isRunning: viewModel.isNewsRunning,
+                topChromeInset: toolbarContentInset,
+                isItemSavedForLater: viewModel.isNewsItemInLater,
+                onAddSource: viewModel.addNewsSource,
+                onAddPreset: viewModel.addNewsPreset,
+                onToggleSource: viewModel.toggleNewsSource,
+                onRemoveSource: viewModel.removeNewsSource,
+                onRun: viewModel.runPlainNews,
+                onClearDigest: viewModel.clearNewsDigest,
+                onOpenItem: viewModel.openNewsItem,
+                onSaveItemForLater: viewModel.saveNewsItemForLater
             )
         }
     }
@@ -636,6 +711,18 @@ struct BrowserView: View {
         isFindFocused = false
         closeFind()
         viewModel.showHistory()
+        withAnimation(toolbarAnimation) {
+            isToolbarVisibleByPointer = true
+        }
+    }
+
+    private func showNews() {
+        isMoreMenuPresented = false
+        isLaterPopoverPresented = false
+        isAddressFocused = false
+        isFindFocused = false
+        closeFind()
+        viewModel.showNews()
         withAnimation(toolbarAnimation) {
             isToolbarVisibleByPointer = true
         }
@@ -747,6 +834,11 @@ struct BrowserView: View {
     }
 
     private func navigateBackWithFlair() {
+        if viewModel.canGoToPreviousLaterItem {
+            navigatePreviousLaterWithFlair()
+            return
+        }
+
         guard viewModel.canGoBack else {
             return
         }
@@ -755,11 +847,32 @@ struct BrowserView: View {
     }
 
     private func navigateForwardWithFlair() {
+        if viewModel.canGoToNextLaterItem {
+            navigateNextLaterWithFlair()
+            return
+        }
+
         guard viewModel.canGoForward else {
             return
         }
         viewModel.goForward()
         flashSwipeFeedback(.forward)
+    }
+
+    private func navigatePreviousLaterWithFlair() {
+        guard viewModel.canGoToPreviousLaterItem else {
+            return
+        }
+        viewModel.loadPreviousLaterItem()
+        flashSwipeFeedback(.previousLater)
+    }
+
+    private func navigateNextLaterWithFlair() {
+        guard viewModel.canGoToNextLaterItem else {
+            return
+        }
+        viewModel.loadNextLaterItem()
+        flashSwipeFeedback(.nextLater)
     }
 
     private func flashSwipeFeedback(_ direction: NavigationSwipeDirection) {

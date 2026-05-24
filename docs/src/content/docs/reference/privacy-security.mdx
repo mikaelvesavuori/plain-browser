@@ -13,7 +13,7 @@ Plain does not include:
 - analytics
 - accounts
 - sync
-- remote AI calls
+- remote AI calls for page reading or Plain News
 - automatic crash reporting
 - page JavaScript execution
 - persistent cookies for page or image fetches
@@ -32,6 +32,8 @@ Plain stores recent page history locally using macOS user defaults.
 
 Plain stores the Later list locally using macOS user defaults.
 
+Plain stores Plain News sources, interests, and the selected news window locally using macOS user defaults.
+
 Fetched images are cached locally in Application Support. The image cache is capped at 50 MB and pruned when files are older than 30 days. The manual **Clear Image Cache** action deletes the cache immediately.
 
 Plain does not cache full HTML pages like a normal browser.
@@ -45,6 +47,14 @@ Page and image requests use ephemeral, cookie-free `URLSession` configurations. 
 Before fetching, Plain resolves hostnames and rejects targets that resolve to local or private IP addresses. This reduces DNS-rebinding-style surprises in Plain's own fetch layer.
 
 Remote SVG images are skipped. When images are enabled, image hosts can still see an image request from your network. Turn **Load with Images** off before opening a page for the strictest text-only mode.
+
+Plain News fetches RSS feeds, source pages, article pages, and selected images directly from your Mac using the same local-network privacy boundary. Source publishers, CDNs, DNS resolvers, and your network provider can still observe those fetches.
+
+## Local AI
+
+Plain News uses Apple Foundation Models locally when the framework is available to the app. When it is not available, Plain falls back to local heuristic article ranking and summaries.
+
+Plain does not send article text, interests, sources, or digest summaries to a remote AI service.
 
 ## Security Posture
 

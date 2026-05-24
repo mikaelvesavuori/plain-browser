@@ -12,6 +12,7 @@ struct StartView: View {
     var onRemoveLater: (LaterItem) -> Void
     var onExportLater: () -> Void
     var onClearLater: () -> Void
+    var onShowNews: () -> Void
     var onClear: () -> Void
     var onDismissWelcome: () -> Void
 
@@ -23,6 +24,8 @@ struct StartView: View {
                 if showsWelcome {
                     FirstRunPlainNote(onDismiss: onDismissWelcome)
                 }
+
+                PlainNewsStartRow(onOpen: onShowNews)
 
                 if !laterItems.isEmpty {
                     laterSection
@@ -106,6 +109,51 @@ struct StartView: View {
                 }
             }
         }
+    }
+}
+
+struct PlainNewsStartRow: View {
+    var onOpen: () -> Void
+
+    var body: some View {
+        Button {
+            onOpen()
+        } label: {
+            HStack(spacing: 12) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 7)
+                        .fill(Color.accentColor.opacity(0.1))
+                    Image(systemName: "newspaper")
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundStyle(.tint)
+                }
+                .frame(width: 36, height: 36)
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Plain News")
+                        .foregroundStyle(.primary)
+                        .font(.headline)
+                    Text("The news you care about")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+
+                Spacer()
+
+                Image(systemName: "arrow.right")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.tertiary)
+            }
+            .padding(12)
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .buttonStyle(.plain)
+        .background(Color(nsColor: .controlBackgroundColor).opacity(0.72), in: RoundedRectangle(cornerRadius: 8))
+        .overlay {
+            RoundedRectangle(cornerRadius: 8)
+                .stroke(Color(nsColor: .separatorColor).opacity(0.38), lineWidth: 1)
+        }
+        .pointingHandCursor()
     }
 }
 

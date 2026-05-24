@@ -1,4 +1,5 @@
 import Foundation
+import PlainCore
 
 struct ReaderFailure: Equatable {
     var url: URL?
@@ -79,5 +80,57 @@ struct LaterStore {
             return
         }
         UserDefaults.standard.set(data, forKey: key)
+    }
+}
+
+struct PlainNewsStore {
+    private let sourcesKey = "Plain.News.Sources"
+    private let interestsKey = "Plain.News.Interests"
+    private let windowKey = "Plain.News.Window"
+
+    func loadSources() -> [PlainNewsSource] {
+        guard let data = UserDefaults.standard.data(forKey: sourcesKey) else {
+            return []
+        }
+        guard let sources = try? JSONDecoder().decode([PlainNewsSource].self, from: data) else {
+            return []
+        }
+
+        let activeSources = sources.filter { source in
+            !PlainNewsPresetSources.retiredSourceURLStrings.contains(PlainNewsArticle.normalizedURLString(source.url))
+        }
+
+        if activeSources.count != sources.count {
+            saveSources(activeSources)
+        }
+
+        return activeSources
+    }
+
+    func saveSources(_ sources: [PlainNewsSource]) {
+        guard let data = try? JSONEncoder().encode(sources) else {
+            return
+        }
+        UserDefaults.standard.set(data, forKey: sourcesKey)
+    }
+
+    func loadInterests() -> String {
+        UserDefaults.standard.string(forKey: interestsKey) ?? ""
+    }
+
+    func saveInterests(_ value: String) {
+        UserDefaults.standard.set(value, forKey: interestsKey)
+    }
+
+    func loadWindow() -> PlainNewsWindow {
+        guard let rawValue = UserDefaults.standard.string(forKey: windowKey),
+              let window = PlainNewsWindow(storageValue: rawValue) else {
+            return .day
+        }
+        return window
+    }
+
+    func saveWindow(_ window: PlainNewsWindow) {
+        UserDefaults.standard.set(window.storageValue, forKey: windowKey)
     }
 }

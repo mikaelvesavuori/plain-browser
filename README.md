@@ -15,10 +15,10 @@
   ·
   <a href="https://docs.browseplain.com/">Docs</a>
   ·
-  <a href="https://github.com/mikaelvesavuori/plain-browser/releases/latest">Download the beta</a>
+  <a href="https://github.com/mikaelvesavuori/plain-browser/releases/latest">Download Plain</a>
 </p>
 
-Plain is a native macOS, document-first browser for the readable web. Plain is currently versioned as **1.0 Beta**.
+Plain is a native macOS, document-first browser for the readable web. Plain is currently versioned as **1.1.0**.
 
 It opens web pages, follows links, searches the web, keeps history, and supports back/forward navigation. The difference is what happens after a page is fetched: Plain removes the active web runtime, extracts the useful text and images, and renders the result as a calm SwiftUI document.
 
@@ -26,16 +26,17 @@ The spirit is simpler internet: reading and navigating without the usual pile-on
 
 Search is intentionally narrow too: when you type something that is not a URL, Plain searches with Mojeek instead of sending the query to Google or another big-tech default.
 
-Plain is small by design. The current arm64 beta packages as a ~4.5 MB DMG, a ~4.0 MB zip, and a ~9.3 MB `.app` bundle.
+Plain is small by design. The current local arm64 `1.1.0` package is a 3.1 MB DMG, a 2.7 MB zip, and an 8.8 MB `.app` bundle.
 
 ## At A Glance
 
 - Plain is a small native macOS browser for reading and moving through the web with less page machinery.
 - It is best for articles, blogs, docs, reference pages, simple websites, and search-driven browsing.
+- Plain News adds a calm source-based digest with RSS/web sources, rolling or calendar windows, local article selection, and save-to-Later support.
 - It is intentionally not a full web-app browser for banking, shopping carts, rich editors, dashboards, video apps, or complex login flows.
 - Address-bar searches use Mojeek instead of Google or another big-tech default.
-- Plain has no telemetry, no account, no sync, no remote AI calls, no automatic crash reporting, and no page JavaScript execution.
-- Plain 1.0 Beta is ad-hoc signed and not notarized, so macOS may show a first-open warning on downloaded builds.
+- Plain has no telemetry, no account, no sync, no remote AI calls for page reading or Plain News, no automatic crash reporting, and no page JavaScript execution.
+- Plain 1.1.0 is ad-hoc signed and not notarized, so macOS may show a first-open warning on downloaded builds.
 
 ## Download Plain
 
@@ -69,6 +70,7 @@ Useful docs:
 
 - [What is Plain?](docs/src/content/docs/getting-started/intro.mdx)
 - [Installation](docs/src/content/docs/getting-started/installation.mdx)
+- [Plain News](docs/src/content/docs/guides/plain-news.mdx)
 - [Privacy and Security](docs/src/content/docs/reference/privacy-security.mdx)
 - [Benchmarks and Claims](docs/src/content/docs/reference/benchmarks.mdx)
 - [Release and Packaging](docs/src/content/docs/reference/release-packaging.mdx)
@@ -106,9 +108,11 @@ Plain is best when browsing means reading, researching, following links, and mov
 - Removes scripts, styles, forms, iframes, canvas, media embeds, hidden elements, unsafe URL attributes, and obvious tracking pixels.
 - Extracts titles, metadata, headings, paragraphs, links, lists, quotes, code blocks, simple tables, figures, captions, and images.
 - Renders the result with native SwiftUI views rather than `WKWebView`.
-- Ships as a small native macOS app; the current arm64 beta DMG is about 4.5 MB.
+- Ships as a small native macOS app; the current local arm64 `1.1.0` DMG is 3.1 MB.
 - Fetches selected non-SVG document images through Plain's own image pipeline and a bounded local cache.
 - Keeps a local Later list for pages you want to return to, available from the toolbar with Markdown export.
+- Includes Plain News for source-based reading digests from RSS and web sources, with rolling `1-30` day, This Week, and Yesterday windows.
+- Uses Apple Foundation Models locally for Plain News article selection and summaries when available, with a local heuristic fallback.
 - Supports true text-only loading when images are turned off before fetching a page.
 - Includes back/forward navigation, recent pages, light/dark/system appearance, fullscreen, copy clean text, copy Markdown, clear history, clear image cache, and Open in Default Browser.
 - Registers `plain://open?url=<encoded-url>` in packaged builds for future local handoff integrations and shortcuts. The legacy `plainview://` scheme is still accepted.
@@ -121,7 +125,7 @@ Plain is private by default:
 - No analytics.
 - No account.
 - No sync.
-- No remote AI calls.
+- No remote AI calls for page reading or Plain News.
 - No automatic crash reporting.
 - No page JavaScript execution.
 - No persistent cookies for page or image fetches.
@@ -132,7 +136,9 @@ Plain checks GitHub Releases on startup for update metadata. That request contai
 
 Page and image requests use ephemeral, cookie-free `URLSession` configurations. Plain clears `Cookie`, `Referer`, and `Origin` headers, applies a 15-second timeout, limits HTML responses to 2 MB, blocks credential-bearing URLs, and blocks localhost, private-network, reserved-network, and local-domain targets by default. Before fetching, Plain resolves hostnames and rejects targets that resolve to local or private IP addresses. Remote SVG images are skipped. When images are enabled, image hosts can still see an image request from your network.
 
-Recent pages are stored locally in macOS user defaults. Fetched images are cached locally in Application Support, capped at 50 MB, and pruned when files are older than 30 days. Release builds use App Sandbox with network-client entitlements.
+Plain News fetches RSS feeds, source pages, article pages, and selected images directly from your Mac. It does not send articles, interests, sources, or summaries to a remote AI service. Source publishers, CDNs, DNS resolvers, and your network provider can still observe normal feed and article fetches.
+
+Recent pages, Later items, Plain News sources, interests, and the selected news window are stored locally in macOS user defaults. Fetched images are cached locally in Application Support, capped at 50 MB, and pruned when files are older than 30 days. Release builds use App Sandbox with network-client entitlements.
 
 See [Privacy and Security](docs/src/content/docs/reference/privacy-security.mdx) for the full privacy and security boundary.
 
@@ -158,9 +164,9 @@ Useful reports include the page URL, what looked wrong, what you expected, wheth
 
 ## Project Status
 
-Plain is currently **Plain 1.0 Beta**. It is useful for readable pages today, with one deliberate boundary: pages that require a full web-app browser should open in your default browser.
+Plain is currently **Plain 1.1.0**. It is useful for readable pages today, with one deliberate boundary: pages that require a full web-app browser should open in your default browser.
 
-The current release includes the native app, semantic extraction, local non-SVG document image fetching and cache, recent pages, Later list with Markdown export, text/Markdown export, clear-history/cache controls, URL handoff, sandboxed packaging, privacy-oriented fetch policy, and benchmark claim tooling.
+The current release includes the native app, semantic extraction, local non-SVG document image fetching and cache, recent pages, Later list with Markdown export and adjacent-item navigation, Plain News, text/Markdown export, clear-history/cache controls, URL handoff, sandboxed packaging, privacy-oriented fetch policy, and benchmark claim tooling.
 
 Known limitations:
 
@@ -168,7 +174,7 @@ Known limitations:
 - Readable pages can extract poorly when the source HTML is unusual or misleading; please report those pages so the extractor can improve.
 - Full CSS layout is not preserved.
 - There are no tabs, browser extensions, accounts, sync, password manager, autofill, payment flows, or full web-app compatibility.
-- Release builds are ad-hoc signed, not Developer ID signed or notarized, so the beta remains unsigned in the practical macOS distribution sense.
+- Release builds are ad-hoc signed, not Developer ID signed or notarized, so Plain remains unsigned in the practical macOS distribution sense.
 
 For release details, see [Release and Packaging](docs/src/content/docs/reference/release-packaging.mdx).
 
@@ -201,21 +207,20 @@ For release details, see [Release and Packaging](docs/src/content/docs/reference
 Plain keeps public performance claims behind a benchmark gate. The numbers below are generated from local benchmark evidence and should be refreshed before publishing new marketing claims.
 
 <!-- plain-claims:start -->
-Plain's current marketing claim gate passes against Chromium on a 20-URL corpus with 3 iterations per URL, using 60/60 paired successful URL/iteration comparisons. Full report: [benchmarks/approved/latest/comparison-marketing.md](benchmarks/approved/latest/comparison-marketing.md).
+Plain's latest local `1.1.0` comparison was captured against Chromium on a 20-URL corpus with 3 iterations per URL, using 60/60 paired successful URL/iteration comparisons for each mode.
 
-Approved claims from the latest run:
+Current supported non-memory claims from the latest run:
 
-- Plain text-only downloaded 74% fewer bytes than Chromium: 104.0 KB vs 393.3 KB median transfer.
-- Plain text-only made 94% fewer network requests than Chromium: 1 vs 18 median requests.
-- Plain text-only reached a rendered native document 61% sooner than Chromium full page load: 557ms vs 1.44s median.
-- Plain text-only used 63% less resident memory than Chromium after load: 126.79 MB vs 345.12 MB median.
-- Plain with images enabled downloaded 74% fewer bytes than Chromium: 104.0 KB vs 393.3 KB median transfer.
-- Plain with images enabled reached a rendered native document 65% sooner than Chromium full page load: 506ms vs 1.44s median.
-- Plain with images enabled used 66% less resident memory than Chromium after load: 118.17 MB vs 345.12 MB median.
+- Plain text-only downloaded 78% fewer bytes than Chromium: 104.1 KB vs 477.9 KB median transfer.
+- Plain text-only made 95% fewer network requests than Chromium: 1 vs 19 median requests.
+- Plain text-only reached a rendered native document 60% sooner than Chromium full page load: 512ms vs 1.29s median.
+- Plain with images enabled downloaded 76% fewer bytes than Chromium: 115.6 KB vs 477.9 KB median transfer.
+- Plain with images enabled reached a rendered native document 61% sooner than Chromium full page load: 504ms vs 1.29s median.
 - Plain executed 0 page JavaScript by design.
-- Plain used 36% less idle-adjusted estimated SoC energy than Chromium in the measured power run: 49.38 J vs 76.56 J. Power report: [benchmarks/approved/latest/power-marketing.md](benchmarks/approved/latest/power-marketing.md).
 
-Evidence captured 2026-05-14T18:08:26.837Z on macOS 26.3, arm64, Mac14,2. These claims are generated from local benchmark evidence, not hand-written assumptions.
+No current resident-memory reduction claim is made for `1.1.0`: the latest run measured 9% lower text-only resident memory and 8% lower image-mode resident memory, below the 30% marketing threshold. The previous power claim was not refreshed for `1.1.0`; rerun the power workflow before publishing a current energy claim.
+
+Evidence captured 2026-05-22T13:10:24.038Z on macOS 26.3, arm64, Mac14,2, Chromium 148.0.7778.96. These claims are generated from local benchmark evidence, not hand-written assumptions.
 <!-- plain-claims:end -->
 
 Avoid broad claims such as "always faster," "more secure than Safari/Chrome," "green," or "battery-saving" unless the specific claim has matching evidence. Plain's strongest durable claim is architectural: it executes 0 page JavaScript by design.
@@ -297,8 +302,8 @@ make package-claims
 On GitHub, pushing a version tag builds and publishes the downloadable release assets:
 
 ```sh
-git tag v1.0.0
-git push origin v1.0.0
+git tag v1.1.0
+git push origin v1.1.0
 ```
 
 The release workflow derives the app version from the tag, builds the docs, runs the claim-aware package build, and attaches the `.dmg`, `.zip`, and checksum file to a GitHub Release.
@@ -329,7 +334,7 @@ Run a local smoke comparison:
 make bench-smoke
 ```
 
-Run the full marketing gate and update the README claim block, including memory-use claims when both benchmark reports contain resident-memory samples:
+Run the full marketing gate. Only publish memory-use claims when the current benchmark run passes the resident-memory threshold:
 
 ```sh
 make bench-marketing

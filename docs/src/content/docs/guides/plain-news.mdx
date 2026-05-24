@@ -1,0 +1,56 @@
+---
+title: Plain News
+description: How to use Plain News sources, windows, interests, and local article selection.
+---
+
+Plain News is a calm, local-first reading digest inside Plain.
+
+It collects recent items from sources you choose, ranks and filters them locally, and opens selected stories in Plain's normal reader. It is meant for intentional catch-up reading, not for an infinite feed.
+
+## Sources
+
+Plain News supports:
+
+- built-in source presets
+- custom RSS feeds
+- custom web sources
+
+The source library is categorized and searchable. A source can belong to more than one category. Click `+` to add a source, or click the checkmark again to remove a saved source from the library view.
+
+Use the **Yours** tab to enable, disable, or remove saved sources.
+
+## Time Windows
+
+Plain News can collect:
+
+- a rolling `1-30` day window
+- **This Week**, meaning the current ISO calendar week
+- **Yesterday**, meaning the previous calendar day
+
+For example, on Friday May 22, 2026, **This Week** starts on Monday May 18, 2026. If you want items before Monday, use a rolling window such as `7` or `14` days.
+
+## Interests
+
+Interests are separate from sources and time windows.
+
+Sources decide where Plain News looks. The time window decides how far back it looks. Interests help the local ranking and selection step decide what should surface in the digest.
+
+Interests can be short phrases separated by commas or new lines, such as:
+
+```text
+local AI, privacy, browser design, games industry
+```
+
+## Local AI Boundary
+
+Plain News uses Apple Foundation Models for local article selection and summaries when the framework is available to the app. When Apple Foundation Models are unavailable, Plain falls back to a local deterministic heuristic.
+
+Plain does not send articles, interests, sources, or summaries to a remote AI service.
+
+Plain still makes normal network requests to fetch RSS feeds, source pages, article pages, and selected images. Source publishers, CDNs, DNS resolvers, and your network provider can still observe those fetches.
+
+## Reading and Later
+
+Opening a digest item uses Plain's normal reader. Use the back button to return to the digest.
+
+Use the plus button on a digest item to save it to Later. When reading from Later, the back/forward controls and left/right arrow keys can move through adjacent Later items.

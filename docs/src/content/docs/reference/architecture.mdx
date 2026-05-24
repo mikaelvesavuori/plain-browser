@@ -67,3 +67,25 @@ Plain keeps:
 - DNS/IP resolution checks before page and image fetches
 
 The image cache is capped at 50 MB and pruned after 30 days.
+
+Plain News state is local too:
+
+- saved news sources
+- selected time window
+- interest text
+
+## Plain News Pipeline
+
+Plain News is built on top of `PlainCore`.
+
+The pipeline is:
+
+1. Load the user's enabled sources.
+2. Fetch RSS feeds or source pages through Plain's fetch policy.
+3. Parse feed items or extract candidate links from web sources.
+4. Apply the selected rolling or calendar time window.
+5. Deduplicate and shortlist articles locally.
+6. Assess selected articles with Apple Foundation Models when available, or a local heuristic fallback.
+7. Render the digest as native SwiftUI rows that open into Plain's reader.
+
+Plain News does not call remote AI services.

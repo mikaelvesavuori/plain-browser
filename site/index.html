@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Plain | When you want the readable web</title>
     <meta name="description"
-      content="When you want the readable web, browse Plain. Plain is a native macOS browser for fast, quiet pages with no page scripts, no product telemetry, and less estimated energy use in measured runs.">
+      content="When you want the readable web, browse Plain. Plain is a native macOS browser for fast, quiet pages and calm source-based news digests with no page scripts or product telemetry.">
     <meta name="robots" content="index, follow, max-image-preview:large">
     <meta name="theme-color" content="#fbf9ff">
     <link rel="canonical" href="https://browseplain.com/">
@@ -58,8 +58,8 @@
           "name": "Plain",
           "alternateName": "Plain Browser",
           "url": "https://browseplain.com/",
-          "softwareVersion": "1.0 Beta",
-          "description": "When you want the readable web, browse Plain. Plain is a native macOS browser for fast, quiet pages with no page scripts, no product telemetry, and less estimated energy use in measured runs.",
+          "softwareVersion": "1.1.0",
+          "description": "When you want the readable web, browse Plain. Plain is a native macOS browser for fast, quiet pages and calm source-based news digests with no page scripts or product telemetry.",
           "applicationCategory": "BrowserApplication",
           "operatingSystem": "macOS",
           "softwareRequirements": "macOS on Apple silicon",
@@ -123,7 +123,7 @@
               "name": "Does Plain track browsing?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "No. There is no product telemetry, account system, sync service, remote AI call, or analytics script."
+                "text": "No. There is no product telemetry, account system, sync service, remote AI call for page reading or Plain News, or analytics script."
               }
             },
             {
@@ -131,7 +131,7 @@
               "name": "Is Plain open source?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "Yes. Plain is a 1.0 beta native Swift app with source available on GitHub."
+                "text": "Yes. Plain is a native Swift app with source available on GitHub."
               }
             }
           ]
@@ -163,11 +163,12 @@
           <h1 id="hero-title">Plain</h1>
           <p class="hero-copy">When you want the readable web, browse Plain.</p>
           <p class="hero-description">
-            Plain turns articles, docs, blogs, and references into fast, readable pages: no ad-tech, no app shell, just
-            the words, images, and links you came for.
+            Plain turns articles, docs, blogs, references, and chosen news sources into fast, readable pages: no
+            ad-tech,
+            no app shell, just the words, images, and links you came for.
           </p>
           <a class="button primary" href="https://github.com/mikaelvesavuori/plain-browser/releases/latest">
-            Download the beta
+            Download Plain
           </a>
           <p class="hero-note">
             Plain Browser is a native Swift app for macOS.<br>It is currently ad-hoc signed and not notarized.
@@ -176,7 +177,7 @@
       </section>
 
       <section id="idea" class="section statement">
-        <h2>The old web was mostly pages.</h2>
+        <h2>The old web was pages.</h2>
         <p>
           You clicked, it loaded, you read, you followed the next link. Plain is built for that older rhythm: HTML as
           source material, the active app layer stripped away, the useful part rebuilt as a native macOS document.
@@ -223,16 +224,26 @@
         </p>
       </section>
 
+      <section class="section statement" aria-labelledby="news-title">
+        <h2 id="news-title">Plain News, no endless feed.</h2>
+        <p>
+          Plain News lets you choose RSS and web sources, pick a rolling or calendar window, add interests, and run a
+          local reading pass. It uses Apple Foundation Models locally when available, with a local heuristic fallback,
+          and opens selected stories in Plain's normal reader.
+        </p>
+      </section>
+
       <section id="evidence" class="section evidence" aria-labelledby="evidence-title">
         <h2 id="evidence-title">A measurable difference.</h2>
         <p>
-          In the current local benchmark gate against Chromium, Plain text-only reached a native document 61% sooner,
-          fetched 74% fewer bytes, made one median request, executed zero page-script bytes, used 36% less idle-adjusted
-          estimated SoC energy in the measured power run, and packaged in an arm64 beta DMG of about 4.5 MB.
+          In the latest local 1.1.0 comparison against Chromium, Plain text-only reached a native document 60% sooner,
+          fetched 78% fewer bytes, made one median request, and executed zero page-script bytes. With images enabled,
+          Plain fetched 76% fewer bytes and reached a native document 61% sooner. The local arm64 1.1.0 DMG is 3.1 MB.
         </p>
         <p class="evidence-note">
-          Benchmark and power evidence: 20 URLs, 3 iterations per URL, captured May 14, 2026. Comparative local
-          measurements, not a promise that every page is always faster or lower energy.
+          Benchmark evidence: 20 URLs, 3 iterations per URL, captured May 22, 2026. Resident-memory claims did not meet
+          the marketing threshold in this run, and power claims were not refreshed for 1.1.0. Comparative local
+          measurements, not a promise that every page is always faster.
         </p>
       </section>
 
@@ -272,12 +283,13 @@
           </details>
           <details class="faq-item">
             <summary>Does Plain track browsing?</summary>
-            <p>No. There is no product telemetry, account system, sync service, remote AI call, or analytics script.</p>
+            <p>No. There is no product telemetry, account system, sync service, remote AI call for page reading or Plain
+              News, or analytics script.</p>
           </details>
           <details class="faq-item">
             <summary>Is Plain open source?</summary>
             <p>
-              Yes. Plain is a 1.0 beta native Swift app with source available on
+              Yes. Plain is a native Swift app with source available on
               <a href="https://github.com/mikaelvesavuori/plainview">GitHub</a>.
             </p>
           </details>
@@ -287,7 +299,7 @@
       <section class="final-cta" aria-labelledby="final-title">
         <h2 id="final-title">Browse Plain.</h2>
         <a class="button primary" href="https://github.com/mikaelvesavuori/plain-browser/releases/latest">
-          Download the beta
+          Download Plain
         </a>
       </section>
     </main>

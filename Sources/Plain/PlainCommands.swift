@@ -30,6 +30,7 @@ struct PlainCommandActions {
     var saveForLater: () -> Void
     var showLater: () -> Void
     var showHistory: () -> Void
+    var showNews: () -> Void
     var exportLater: () -> Void
     var copyCleanText: () -> Void
     var copyMarkdown: () -> Void
@@ -104,6 +105,11 @@ struct PlainCommands: Commands {
             }
             .keyboardShortcut("y", modifiers: [.command])
             .disabled(actions?.canShowHistory != true)
+
+            Button("Show Plain News") {
+                actions?.showNews()
+            }
+            .disabled(actions == nil)
 
             Button("Export Later") {
                 actions?.exportLater()

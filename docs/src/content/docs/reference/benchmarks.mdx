@@ -84,7 +84,7 @@ Public performance/resource claims must pass the marketing gate:
 make bench-marketing
 ```
 
-The gate uses `benchmarks/urls-marketing.txt`, 3 iterations, Chromium as the browser baseline, validates the report, publishes tracked evidence artifacts, and updates the README claim block.
+The gate uses `benchmarks/urls-marketing.txt`, 3 iterations, Chromium as the browser baseline, validates the report, publishes tracked evidence artifacts, and updates the README claim block when the full policy passes.
 
 The gate fails unless the comparison has:
 
@@ -96,6 +96,8 @@ The gate fails unless the comparison has:
 - at least 50% fewer text-only bytes, 50% fewer text-only requests, and 30% fewer image-mode bytes for those respective claims
 - at least 30% lower text-only and image-mode median load/render time for those respective speed claims
 - optional resident-memory claims approved only when both reports include memory samples and Plain shows at least 30% lower median resident memory after load
+
+For Plain `1.1.0`, the fresh May 22, 2026 benchmark run supports byte, request, speed, and 0-page-JavaScript claims, but the full marketing gate did not pass because resident-memory reductions were below the 30% threshold. Do not publish a current `1.1.0` memory-reduction claim unless a later run passes that policy.
 
 ## Power Measurement Gate
 
@@ -121,7 +123,7 @@ Good claims:
 
 - "Across this benchmark set, Plain text-only downloaded X% fewer bytes than Chromium."
 - "Across this benchmark set, Plain made X% fewer network requests than Chromium."
-- "Across this benchmark set, Plain used X% less resident memory than Chromium after load."
+- "Across this benchmark set, Plain used X% less resident memory than Chromium after load." Only use this when the current run passes the memory threshold.
 - "Plain executes 0 page JavaScript by design."
 
 Claims to avoid:
@@ -131,6 +133,7 @@ Claims to avoid:
 - "Plain uses less battery" unless measured directly on battery with an approved battery-drain protocol.
 - "Plain is always faster than browsers."
 - "Plain is more secure than Safari/Chrome."
+- "Plain uses less memory than Chromium" unless the current benchmark run passes the resident-memory threshold.
 
 Run the claim policy tests before release:
 

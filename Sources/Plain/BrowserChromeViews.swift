@@ -332,6 +332,8 @@ enum AppAppearance: String {
 enum NavigationSwipeDirection: Equatable {
     case back
     case forward
+    case previousLater
+    case nextLater
 
     var systemName: String {
         switch self {
@@ -339,6 +341,10 @@ enum NavigationSwipeDirection: Equatable {
             return "chevron.left"
         case .forward:
             return "chevron.right"
+        case .previousLater:
+            return "arrow.up"
+        case .nextLater:
+            return "arrow.down"
         }
     }
 
@@ -348,6 +354,10 @@ enum NavigationSwipeDirection: Equatable {
             return "Back"
         case .forward:
             return "Forward"
+        case .previousLater:
+            return "Previous Later"
+        case .nextLater:
+            return "Next Later"
         }
     }
 }
@@ -419,6 +429,82 @@ struct EscapeKeyMonitor: NSViewRepresentable {
                 NSEvent.removeMonitor(monitor)
             }
             monitor = nil
+        }
+    }
+}
+
+struct LaterNavigationKeyMonitor: NSViewRepresentable {
+    var isEnabled: Bool
+    var canGoPrevious: Bool
+    var canGoNext: Bool
+    var onPrevious: () -> Void
+    var onNext: () -> Void
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator()
+    }
+
+    func makeNSView(context: Context) -> NSView {
+        let view = NSView(frame: .zero)
+        context.coordinator.install(for: view)
+        return view
+    }
+
+    func updateNSView(_ nsView: NSView, context: Context) {
+        context.coordinator.view = nsView
+        context.coordinator.isEnabled = isEnabled
+        context.coordinator.canGoPrevious = canGoPrevious
+        context.coordinator.canGoNext = canGoNext
+        context.coordinator.onPrevious = onPrevious
+        context.coordinator.onNext = onNext
+    }
+
+    static func dismantleNSView(_ nsView: NSView, coordinator: Coordinator) {
+        coordinator.uninstall()
+    }
+
+    final class Coordinator {
+        weak var view: NSView?
+        var isEnabled = false
+        var canGoPrevious = false
+        var canGoNext = false
+        var onPrevious: () -> Void = {}
+        var onNext: () -> Void = {}
+
+        private var monitor: Any?
+
+        func install(for view: NSView) {
+            self.view = view
+            monitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
+                guard let self,
+                      self.isEnabled,
+                      self.hasNoNavigationModifiers(event) else {
+                    return event
+                }
+
+                switch event.keyCode {
+                case 123 where self.canGoPrevious:
+                    self.onPrevious()
+                    return nil
+                case 124 where self.canGoNext:
+                    self.onNext()
+                    return nil
+                default:
+                    return event
+                }
+            }
+        }
+
+        func uninstall() {
+            if let monitor {
+                NSEvent.removeMonitor(monitor)
+            }
+            monitor = nil
+        }
+
+        private func hasNoNavigationModifiers(_ event: NSEvent) -> Bool {
+            let flags = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
+            return flags.intersection([.command, .option, .control, .shift]).isEmpty
         }
     }
 }

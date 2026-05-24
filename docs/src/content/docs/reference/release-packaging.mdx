@@ -30,8 +30,8 @@ make package-fast
 Publish a versioned GitHub Release with:
 
 ```sh
-git tag v1.0.0
-git push origin v1.0.0
+git tag v1.1.0
+git push origin v1.1.0
 ```
 
 The release workflow builds the app on macOS, derives `CFBundleShortVersionString` and artifact names from the tag, and uploads the `.dmg`, `.zip`, and `SHA256SUMS.txt` as release assets.
@@ -52,9 +52,9 @@ Version tags run the stronger release path: docs build plus the claim-aware pack
 
 Plain performs a lightweight startup check against the repository's latest GitHub Release. If the latest release tag is newer than the packaged app's `CFBundleShortVersionString`, Plain shows a prompt linking to the release page.
 
-The beta does not include automatic downloads or in-app installation. Users update manually from GitHub Releases.
+Plain does not include automatic downloads or in-app installation. Users update manually from GitHub Releases.
 
-## Current Beta Includes
+## Current Release Includes
 
 - native SwiftUI macOS app bundle
 - URL input and page loading
@@ -66,6 +66,8 @@ The beta does not include automatic downloads or in-app installation. Users upda
 - swipe back/forward navigation
 - recent pages
 - Later list and Markdown export
+- adjacent Later item navigation with toolbar buttons and left/right arrow keys while reading from Later
+- Plain News source library, custom sources, local digest generation, and save-to-Later support
 - find in page
 - reader text scaling and serif/sans font switching
 - light/dark/system appearance controls

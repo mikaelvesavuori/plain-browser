@@ -11,12 +11,29 @@ final class BrowserViewModel: ObservableObject {
         case loading(URL?)
         case loaded(DocumentModel)
         case failed(ReaderFailure)
+        case news
     }
 
     @Published var address: String = ""
     @Published private(set) var state: State = .idle
     @Published private(set) var recentPages: [HistoryItem] = []
     @Published private(set) var laterItems: [LaterItem] = []
+    @Published private(set) var newsSources: [PlainNewsSource] = []
+    @Published var newsInterestProfile: String = "" {
+        didSet {
+            newsStore.saveInterests(newsInterestProfile)
+        }
+    }
+    @Published var newsWindow: PlainNewsWindow = .day {
+        didSet {
+            newsStore.saveWindow(newsWindow)
+        }
+    }
+    @Published private(set) var newsDigest: PlainNewsDigest?
+    @Published private(set) var newsProgress: PlainNewsProgress?
+    @Published private(set) var newsErrorMessage: String?
+    @Published private(set) var newsAIStatus: PlainNewsAIStatus = PlainNewsIntelligenceFactory.availabilityStatus()
+    @Published private(set) var isNewsRunning = false
     @Published var showsImages: Bool = true
     @Published private(set) var statusMessage: String?
     @Published private(set) var updateNotice: AppUpdate?
@@ -26,27 +43,66 @@ final class BrowserViewModel: ObservableObject {
     private var currentIndex: Int?
     private let historyStore = HistoryStore()
     private let laterStore = LaterStore()
+    private let newsStore = PlainNewsStore()
+    private var newsPipeline = PlainNewsPipeline()
     private let imageCache = ImageCache()
     private let handoffParser = URLHandoffParser()
     private let exporter = DocumentTextExporter()
     private let updateChecker = ReleaseUpdateChecker()
+    private var newsReturnNavigation = PlainNewsReturnNavigation()
+    private var laterReadingSequence = PlainLaterReadingSequence()
     private var didHandleStartupArguments = false
     private var didCheckForUpdates = false
 
     init() {
         recentPages = historyStore.load()
         laterItems = laterStore.load()
+        newsSources = newsStore.loadSources()
+        newsInterestProfile = newsStore.loadInterests()
+        newsWindow = newsStore.loadWindow()
         try? imageCache.prune()
     }
 
     var canGoBack: Bool {
+        if canReturnToNewsFromCurrentSurface {
+            return true
+        }
+
+        switch state {
+        case .loaded, .failed:
+            break
+        case .idle, .loading, .news:
+            return false
+        }
+
         guard let currentIndex else { return false }
         return currentIndex > 0
     }
 
     var canGoForward: Bool {
+        switch state {
+        case .loaded, .failed:
+            break
+        case .idle, .loading, .news:
+            return false
+        }
+
         guard let currentIndex else { return false }
         return currentIndex < documents.count - 1
+    }
+
+    var canGoToPreviousLaterItem: Bool {
+        guard canNavigateLaterItems else {
+            return false
+        }
+        return laterReadingSequence.canMovePrevious(in: laterURLs)
+    }
+
+    var canGoToNextLaterItem: Bool {
+        guard canNavigateLaterItems else {
+            return false
+        }
+        return laterReadingSequence.canMoveNext(in: laterURLs)
     }
 
     var currentDocument: DocumentModel? {
@@ -64,20 +120,29 @@ final class BrowserViewModel: ObservableObject {
             return document.finalURL
         case .failed(let failure):
             return failure.url
+        case .news:
+            return nil
         case .idle:
             return nil
         }
     }
 
     var currentIsInLater: Bool {
+        if activeLaterIndex != nil {
+            return true
+        }
+
         guard let currentURL else {
             return false
         }
-        return laterItems.contains { $0.url == currentURL }
+
+        return isURLInLater(currentURL)
     }
 
     func loadAddress() {
         let input = address
+        clearNewsReturn()
+        clearLaterNavigation()
         Task {
             await load(input)
         }
@@ -97,21 +162,30 @@ final class BrowserViewModel: ObservableObject {
 
     func loadRecent(_ item: HistoryItem) {
         address = item.url.absoluteString
+        clearNewsReturn()
+        clearLaterNavigation()
         loadAddress()
     }
 
     func loadLater(_ item: LaterItem) {
-        address = item.url.absoluteString
-        loadAddress()
+        loadLaterItem(item)
     }
 
     func showHistory() {
         address = ""
+        clearNewsReturn()
+        clearLaterNavigation()
         state = .idle
+    }
+
+    func showNews() {
+        address = ""
+        state = .news
     }
 
     func openLink(_ url: URL) {
         address = url.absoluteString
+        clearLaterNavigation()
         Task {
             await load(url.absoluteString)
         }
@@ -121,6 +195,7 @@ final class BrowserViewModel: ObservableObject {
         guard let sourceURL = handoffParser.sourceURL(from: url) else {
             return
         }
+        clearNewsReturn()
         openLink(sourceURL)
     }
 
@@ -133,6 +208,7 @@ final class BrowserViewModel: ObservableObject {
         for argument in ProcessInfo.processInfo.arguments.dropFirst() {
             if let url = handoffParser.sourceURL(from: argument) {
                 address = url.absoluteString
+                clearLaterNavigation()
                 Task {
                     await load(url.absoluteString)
                 }
@@ -167,10 +243,18 @@ final class BrowserViewModel: ObservableObject {
     }
 
     func goBack() {
+        if canReturnToNewsFromCurrentSurface {
+            address = ""
+            newsReturnNavigation.clearFailureReturn()
+            state = .news
+            return
+        }
+
         guard let currentIndex, currentIndex > 0 else {
             return
         }
         let nextIndex = currentIndex - 1
+        clearLaterNavigation()
         self.currentIndex = nextIndex
         let document = documents[nextIndex]
         address = document.finalURL.absoluteString
@@ -182,6 +266,7 @@ final class BrowserViewModel: ObservableObject {
             return
         }
         let nextIndex = currentIndex + 1
+        clearLaterNavigation()
         self.currentIndex = nextIndex
         let document = documents[nextIndex]
         address = document.finalURL.absoluteString
@@ -216,8 +301,15 @@ final class BrowserViewModel: ObservableObject {
             return
         }
 
-        if let existingItem = laterItems.first(where: { $0.url == currentURL }) {
+        let currentURLString = PlainNewsArticle.normalizedURLString(currentURL)
+        if let existingItem = laterItems.first(where: { item in
+            let itemURLString = PlainNewsArticle.normalizedURLString(item.url)
+            return itemURLString == currentURLString || laterReadingSequence.containsActiveURL(item.url)
+        }) {
             laterItems = laterStore.remove(existingItem, from: laterItems)
+            if laterReadingSequence.containsActiveURL(existingItem.url) {
+                clearLaterNavigation()
+            }
             setStatus("Removed from Later")
             return
         }
@@ -233,13 +325,155 @@ final class BrowserViewModel: ObservableObject {
 
     func removeFromLater(_ item: LaterItem) {
         laterItems = laterStore.remove(item, from: laterItems)
+        if laterReadingSequence.containsActiveURL(item.url) {
+            clearLaterNavigation()
+        }
         setStatus("Removed from Later")
     }
 
     func clearLater() {
         laterItems = []
+        clearLaterNavigation()
         laterStore.save([])
         setStatus("Later cleared")
+    }
+
+    func loadPreviousLaterItem() {
+        guard canGoToPreviousLaterItem,
+              let index = activeLaterIndex else {
+            return
+        }
+        loadLaterItem(laterItems[index - 1])
+    }
+
+    func loadNextLaterItem() {
+        guard canGoToNextLaterItem,
+              let index = activeLaterIndex else {
+            return
+        }
+        loadLaterItem(laterItems[index + 1])
+    }
+
+    func isNewsItemInLater(_ item: PlainNewsDigestItem) -> Bool {
+        isURLInLater(item.article.url)
+    }
+
+    func saveNewsItemForLater(_ item: PlainNewsDigestItem) {
+        guard !isNewsItemInLater(item) else {
+            setStatus("Already saved for Later")
+            return
+        }
+
+        let laterItem = LaterItem(
+            url: item.article.url,
+            title: item.article.title,
+            addedAt: Date()
+        )
+        laterItems = laterStore.add(laterItem, to: laterItems)
+        setStatus("Saved for Later")
+    }
+
+    func addNewsSource(
+        name: String,
+        urlString: String,
+        kind: PlainNewsSourceKind,
+        categories: [PlainNewsCategory]
+    ) {
+        let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        let fallbackName = trimmedName.isEmpty ? "Untitled source" : trimmedName
+
+        guard let url = normalizedNewsURL(from: urlString) else {
+            newsErrorMessage = "Use a valid RSS or web URL."
+            return
+        }
+
+        let normalizedURL = PlainNewsArticle.normalizedURLString(url)
+        guard !newsSources.contains(where: { PlainNewsArticle.normalizedURLString($0.url) == normalizedURL }) else {
+            newsErrorMessage = "That source is already in Plain News."
+            return
+        }
+
+        newsSources.append(PlainNewsSource(name: fallbackName, url: url, kind: kind, categories: categories))
+        newsStore.saveSources(newsSources)
+        newsErrorMessage = nil
+        setStatus("News source added")
+    }
+
+    func addNewsPreset(_ source: PlainNewsSource) {
+        let normalizedURL = PlainNewsArticle.normalizedURLString(source.url)
+        guard !newsSources.contains(where: { PlainNewsArticle.normalizedURLString($0.url) == normalizedURL }) else {
+            newsErrorMessage = "That source is already in Plain News."
+            return
+        }
+
+        newsSources.append(source)
+        newsStore.saveSources(newsSources)
+        newsErrorMessage = nil
+        setStatus("News source added")
+    }
+
+    func toggleNewsSource(_ source: PlainNewsSource) {
+        guard let index = newsSources.firstIndex(where: { $0.id == source.id }) else {
+            return
+        }
+
+        newsSources[index].isEnabled.toggle()
+        newsStore.saveSources(newsSources)
+    }
+
+    func removeNewsSource(_ source: PlainNewsSource) {
+        newsSources.removeAll { $0.id == source.id }
+        newsStore.saveSources(newsSources)
+        setStatus("News source removed")
+    }
+
+    func clearNewsDigest() {
+        newsDigest = nil
+        newsProgress = nil
+        newsErrorMessage = nil
+    }
+
+    func runPlainNews() {
+        guard !isNewsRunning else {
+            return
+        }
+
+        let enabledSources = newsSources.filter(\.isEnabled)
+        guard !enabledSources.isEmpty else {
+            newsErrorMessage = "Add or enable at least one source."
+            return
+        }
+
+        let pipeline = newsPipeline
+        let window = newsWindow
+        let interests = newsInterestProfile
+        isNewsRunning = true
+        newsDigest = nil
+        newsErrorMessage = nil
+        newsProgress = PlainNewsProgress(stage: .collecting, message: "Collecting sources", completed: 0, total: enabledSources.count)
+        state = .news
+
+        Task {
+            let digest = await pipeline.run(
+                sources: enabledSources,
+                window: window,
+                interestProfile: interests
+            ) { progress in
+                await MainActor.run {
+                    self.newsProgress = progress
+                }
+            }
+
+            self.newsDigest = digest
+            self.isNewsRunning = false
+            self.newsProgress = nil
+            self.setStatus("Plain News ready")
+        }
+    }
+
+    func openNewsItem(_ item: PlainNewsDigestItem) {
+        newsReturnNavigation.prepareForOpen()
+        openLink(item.article.url)
     }
 
     func exportLater() {
@@ -304,6 +538,7 @@ final class BrowserViewModel: ObservableObject {
             let document = try await pipeline.load(input, fetchImages: showsImages)
             applyLoadedDocument(document)
         } catch {
+            newsReturnNavigation.failLoad()
             state = .failed(
                 ReaderFailure(
                     url: loadingURL,
@@ -321,6 +556,9 @@ final class BrowserViewModel: ObservableObject {
 
         documents.append(document)
         currentIndex = documents.count - 1
+        if let currentIndex {
+            newsReturnNavigation.completeLoad(documentIndex: currentIndex)
+        }
         address = document.finalURL.absoluteString
         state = .loaded(document)
 
@@ -336,6 +574,58 @@ final class BrowserViewModel: ObservableObject {
         let pasteboard = NSPasteboard.general
         pasteboard.clearContents()
         pasteboard.setString(text, forType: .string)
+    }
+
+    private var canReturnToNewsFromCurrentSurface: Bool {
+        switch state {
+        case .loaded:
+            return newsReturnNavigation.canReturnFromLoadedDocument(currentIndex: currentIndex)
+        case .failed:
+            return newsReturnNavigation.canReturnFromFailure
+        case .idle, .loading, .news:
+            return false
+        }
+    }
+
+    private func clearNewsReturn() {
+        newsReturnNavigation.clear()
+    }
+
+    private var laterURLs: [URL] {
+        laterItems.map(\.url)
+    }
+
+    private var activeLaterIndex: Int? {
+        laterReadingSequence.activeIndex(in: laterURLs)
+    }
+
+    private var canNavigateLaterItems: Bool {
+        switch state {
+        case .loaded, .failed:
+            return true
+        case .idle, .loading, .news:
+            return false
+        }
+    }
+
+    private func loadLaterItem(_ item: LaterItem) {
+        clearNewsReturn()
+        laterReadingSequence.activate(url: item.url)
+        address = item.url.absoluteString
+        Task {
+            await load(item.url.absoluteString)
+        }
+    }
+
+    private func clearLaterNavigation() {
+        laterReadingSequence.clear()
+    }
+
+    private func isURLInLater(_ url: URL) -> Bool {
+        let normalized = PlainNewsArticle.normalizedURLString(url)
+        return laterItems.contains { item in
+            PlainNewsArticle.normalizedURLString(item.url) == normalized
+        }
     }
 
     private func makeReportIssueURL() -> URL? {
@@ -366,7 +656,7 @@ final class BrowserViewModel: ObservableObject {
         case .failed(let failure):
             pageDetails.append("failure: \(failure.title)")
             pageDetails.append("message: \(failure.message)")
-        case .loading, .idle:
+        case .loading, .idle, .news:
             break
         }
 
@@ -432,5 +722,20 @@ final class BrowserViewModel: ObservableObject {
                 statusMessage = nil
             }
         }
+    }
+
+    private func normalizedNewsURL(from value: String) -> URL? {
+        let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else {
+            return nil
+        }
+
+        if let url = URL(string: trimmed),
+           let scheme = url.scheme?.lowercased(),
+           scheme == "http" || scheme == "https" {
+            return url
+        }
+
+        return URL(string: "https://\(trimmed)")
     }
 }
