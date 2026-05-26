@@ -40,13 +40,13 @@ await runCommand("swift", ["build", "-c", "release", "--product", "PlainBench"],
 const releaseBinPath = execFileSync("swift", ["build", "-c", "release", "--show-bin-path"], {
   encoding: "utf8",
 }).trim();
-const plainviewBench = path.join(releaseBinPath, "PlainBench");
+const plainBench = path.join(releaseBinPath, "PlainBench");
 
 console.log("Measuring idle baseline...");
 const idle = await measureIdle();
 
 console.log("Measuring Plain workload...");
-const plainview = await measureWorkload("plainview", plainviewBench, [
+const plain = await measureWorkload("plain", plainBench, [
   "--urls",
   options.urls,
   "--iterations",
@@ -54,7 +54,7 @@ const plainview = await measureWorkload("plainview", plainviewBench, [
   "--mode",
   "both",
   "--out",
-  options.plainviewOutput,
+  options.plainOutput,
 ], idle.averageEstimatedSocPowerMilliwatts);
 
 console.log("Measuring Chromium workload...");
@@ -85,20 +85,20 @@ const report = {
   corpus,
   measurements: {
     idle,
-    plainview,
+    plain,
     browser,
   },
   comparison: {
-    plainviewIdleAdjustedJoules: plainview.idleAdjustedEstimatedSocEnergyJoules,
+    plainIdleAdjustedJoules: plain.idleAdjustedEstimatedSocEnergyJoules,
     browserIdleAdjustedJoules: browser.idleAdjustedEstimatedSocEnergyJoules,
     idleAdjustedEnergyReductionPercent: percentageReduction(
-      plainview.idleAdjustedEstimatedSocEnergyJoules,
+      plain.idleAdjustedEstimatedSocEnergyJoules,
       browser.idleAdjustedEstimatedSocEnergyJoules,
     ),
-    plainviewGrossJoules: plainview.grossEstimatedSocEnergyJoules,
+    plainGrossJoules: plain.grossEstimatedSocEnergyJoules,
     browserGrossJoules: browser.grossEstimatedSocEnergyJoules,
     grossEnergyReductionPercent: percentageReduction(
-      plainview.grossEstimatedSocEnergyJoules,
+      plain.grossEstimatedSocEnergyJoules,
       browser.grossEstimatedSocEnergyJoules,
     ),
   },
@@ -239,11 +239,11 @@ function markdown(report) {
   lines.push("");
   lines.push("| Metric | Plain | Chromium | Reduction |");
   lines.push("| --- | ---: | ---: | ---: |");
-  lines.push(`| Idle-adjusted estimated SoC energy | ${formatJoules(report.comparison.plainviewIdleAdjustedJoules)} | ${formatJoules(report.comparison.browserIdleAdjustedJoules)} | ${formatPercent(report.comparison.idleAdjustedEnergyReductionPercent)} |`);
-  lines.push(`| Gross estimated SoC energy | ${formatJoules(report.comparison.plainviewGrossJoules)} | ${formatJoules(report.comparison.browserGrossJoules)} | ${formatPercent(report.comparison.grossEnergyReductionPercent)} |`);
-  lines.push(`| Average estimated SoC power | ${formatMilliwatts(report.measurements.plainview.averageEstimatedSocPowerMilliwatts)} | ${formatMilliwatts(report.measurements.browser.averageEstimatedSocPowerMilliwatts)} | - |`);
-  lines.push(`| Duration | ${formatMilliseconds(report.measurements.plainview.durationMilliseconds)} | ${formatMilliseconds(report.measurements.browser.durationMilliseconds)} | - |`);
-  lines.push(`| Samples | ${report.measurements.plainview.sampleCount} | ${report.measurements.browser.sampleCount} | - |`);
+  lines.push(`| Idle-adjusted estimated SoC energy | ${formatJoules(report.comparison.plainIdleAdjustedJoules)} | ${formatJoules(report.comparison.browserIdleAdjustedJoules)} | ${formatPercent(report.comparison.idleAdjustedEnergyReductionPercent)} |`);
+  lines.push(`| Gross estimated SoC energy | ${formatJoules(report.comparison.plainGrossJoules)} | ${formatJoules(report.comparison.browserGrossJoules)} | ${formatPercent(report.comparison.grossEnergyReductionPercent)} |`);
+  lines.push(`| Average estimated SoC power | ${formatMilliwatts(report.measurements.plain.averageEstimatedSocPowerMilliwatts)} | ${formatMilliwatts(report.measurements.browser.averageEstimatedSocPowerMilliwatts)} | - |`);
+  lines.push(`| Duration | ${formatMilliseconds(report.measurements.plain.durationMilliseconds)} | ${formatMilliseconds(report.measurements.browser.durationMilliseconds)} | - |`);
+  lines.push(`| Samples | ${report.measurements.plain.sampleCount} | ${report.measurements.browser.sampleCount} | - |`);
   lines.push("");
   lines.push("## Evidence");
   lines.push("");
@@ -287,7 +287,7 @@ function parseArgs(args) {
     iterations: 3,
     browser: "chromium",
     output: "benchmarks/results/power-marketing.json",
-    plainviewOutput: "benchmarks/results/plainview-power.json",
+    plainOutput: "benchmarks/results/plain-power.json",
     browserOutput: "benchmarks/results/browser-power.json",
     rawDir: "benchmarks/results/power-raw",
     sampleIntervalMilliseconds: 1000,
@@ -308,7 +308,7 @@ function parseArgs(args) {
     else if (arg === "--iterations") options.iterations = Number.parseInt(next(), 10);
     else if (arg === "--browser") options.browser = next();
     else if (arg === "--out") options.output = next();
-    else if (arg === "--plainview-out") options.plainviewOutput = next();
+    else if (arg === "--plain-out") options.plainOutput = next();
     else if (arg === "--browser-out") options.browserOutput = next();
     else if (arg === "--raw-dir") options.rawDir = next();
     else if (arg === "--sample-interval") options.sampleIntervalMilliseconds = Number.parseInt(next(), 10);

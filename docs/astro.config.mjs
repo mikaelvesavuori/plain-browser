@@ -13,7 +13,7 @@ export default defineConfig({
         {
           icon: "github",
           label: "GitHub",
-          href: "https://github.com/mikaelvesavuori/plainview",
+          href: "https://github.com/mikaelvesavuori/plain-browser",
         },
       ],
       sidebar: [

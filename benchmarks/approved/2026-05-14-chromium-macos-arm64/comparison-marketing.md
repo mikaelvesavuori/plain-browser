@@ -1,4 +1,4 @@
-# Plainview Benchmark Comparison
+# Plain Benchmark Comparison
 
 - Generated: 2026-05-14T18:08:26.837Z
 - Browser baseline: chromium
@@ -8,7 +8,7 @@
 
 ## Summary
 
-| Metric | Plainview Text-Only | Chromium Pair | Plainview Images | Chromium Pair |
+| Metric | Plain Text-Only | Chromium Pair | Plain Images | Chromium Pair |
 | --- | ---: | ---: | ---: | ---: |
 | Runs | 60 | 60 | 60 | 60 |
 | Median load/render time | 557ms | 1.44s | 506ms | 1.44s |
@@ -20,12 +20,12 @@
 ## Evidence
 
 - Required: 20+ URLs, 3+ iterations, 95%+ success rate
-- Plainview text-only: 20 URL(s), 3 iteration(s), 60/60 successful (100%)
-- Plainview images: 20 URL(s), 3 iteration(s), 60/60 successful (100%)
+- Plain text-only: 20 URL(s), 3 iteration(s), 60/60 successful (100%)
+- Plain images: 20 URL(s), 3 iteration(s), 60/60 successful (100%)
 - Browser: 20 URL(s), 3 iteration(s), 60/60 successful (100%)
 - Paired text-only comparison: 20 URL(s), 3 iteration(s), 60/60 successful (100%)
 - Paired image comparison: 20 URL(s), 3 iteration(s), 60/60 successful (100%)
-- Plainview/browser capture skew: 0.0 hours
+- Plain/browser capture skew: 0.0 hours
 - Corpus: 20 URL(s), SHA-256 19f73cf74d3b260f683a4c63f587fb88f11da2c547f73f017b70c09a4cc5bcb7
 
 ## Environment
@@ -42,13 +42,13 @@
 ## Claim Readiness
 
 Approved:
-- Across paired successful runs in this benchmark set, Plainview text-only downloaded 74% fewer bytes than the 60-run Chromium baseline median.
-- Across paired successful runs in this benchmark set, Plainview text-only made 94% fewer requests than the Chromium baseline median.
-- Across paired successful runs in this benchmark set, Plainview text-only reached a rendered native document 61% sooner than Chromium full page load.
-- Across paired successful runs in this benchmark set, Plainview text-only used 63% less resident memory than Chromium after load.
-- Across paired successful runs in this benchmark set, Plainview with images downloaded 74% fewer bytes than the Chromium baseline median.
-- Across paired successful runs in this benchmark set, Plainview with images reached a rendered native document 65% sooner than Chromium full page load.
-- Across paired successful runs in this benchmark set, Plainview with images used 66% less resident memory than Chromium after load.
-- Plainview executed 0 page JavaScript by design.
+- Across paired successful runs in this benchmark set, Plain text-only downloaded 74% fewer bytes than the 60-run Chromium baseline median.
+- Across paired successful runs in this benchmark set, Plain text-only made 94% fewer requests than the Chromium baseline median.
+- Across paired successful runs in this benchmark set, Plain text-only reached a rendered native document 61% sooner than Chromium full page load.
+- Across paired successful runs in this benchmark set, Plain text-only used 63% less resident memory than Chromium after load.
+- Across paired successful runs in this benchmark set, Plain with images downloaded 74% fewer bytes than the Chromium baseline median.
+- Across paired successful runs in this benchmark set, Plain with images reached a rendered native document 65% sooner than Chromium full page load.
+- Across paired successful runs in this benchmark set, Plain with images used 66% less resident memory than Chromium after load.
+- Plain executed 0 page JavaScript by design.
 
 Avoid broad unqualified claims such as "green," "eco-friendly," or "always faster." Use only claims approved by the gate, and cite benchmark URL set, date, machine, network, browser, and median values.

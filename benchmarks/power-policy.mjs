@@ -33,7 +33,7 @@ export function evaluatePowerReport(report, policy = "marketing", overrides = {}
   errors.push(...freshnessReasons(report, resolvedPolicy));
   errors.push(...corpusReasons(report?.corpus, resolvedPolicy));
   errors.push(...measurementReasons("Idle baseline", report?.measurements?.idle, resolvedPolicy));
-  errors.push(...measurementReasons("Plain workload", report?.measurements?.plainview, resolvedPolicy));
+  errors.push(...measurementReasons("Plain workload", report?.measurements?.plain, resolvedPolicy));
   errors.push(...measurementReasons("Chromium workload", report?.measurements?.browser, resolvedPolicy));
 
   if (resolvedPolicy.requireEnvironment) {
@@ -44,7 +44,7 @@ export function evaluatePowerReport(report, policy = "marketing", overrides = {}
     label: "idle-adjusted-estimated-soc-energy",
     kind: "power",
     metric: "idle-adjusted-estimated-soc-energy-joules",
-    plainviewValue: comparison.plainviewIdleAdjustedJoules,
+    plainValue: comparison.plainIdleAdjustedJoules,
     browserValue: comparison.browserIdleAdjustedJoules,
     reductionPercent,
     statement: `In this measured local run, Plain used ${formatPercent(reductionPercent)} less idle-adjusted estimated SoC energy than the Chromium baseline.`,

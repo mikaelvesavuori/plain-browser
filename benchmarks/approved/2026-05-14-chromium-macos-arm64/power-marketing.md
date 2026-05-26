@@ -1,4 +1,4 @@
-# Plainview Power Measurement
+# Plain Power Measurement
 
 - Generated: 2026-05-14T12:58:42.593Z
 - Claim gate: passed
@@ -7,7 +7,7 @@
 
 ## Summary
 
-| Metric | Plainview | Chromium | Reduction |
+| Metric | Plain | Chromium | Reduction |
 | --- | ---: | ---: | ---: |
 | Idle-adjusted estimated SoC energy | 49.38 J | 76.56 J | 36% |
 | Gross estimated SoC energy | 60.67 J | 107.67 J | 44% |
@@ -26,6 +26,6 @@
 ## Claim Readiness
 
 Approved:
-- In this measured local run, Plainview used 36% less idle-adjusted estimated SoC energy than the Chromium baseline.
+- In this measured local run, Plain used 36% less idle-adjusted estimated SoC energy than the Chromium baseline.
 
 Do not convert this into an unqualified "green" or "eco-friendly" claim. Use only the qualified estimated-energy language above.

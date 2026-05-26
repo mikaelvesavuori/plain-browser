@@ -30,13 +30,13 @@ The optional browser baseline measures:
 ## Run Plain Benchmarks
 
 ```sh
-swift run PlainBench -- --urls benchmarks/urls.txt --iterations 3 --mode both --out benchmarks/results/plainview.json
+swift run PlainBench -- --urls benchmarks/urls.txt --iterations 3 --mode both --out benchmarks/results/plain.json
 ```
 
 This writes:
 
-- `benchmarks/results/plainview.json`
-- `benchmarks/results/plainview.md`
+- `benchmarks/results/plain.json`
+- `benchmarks/results/plain.md`
 
 ## Run Browser Baseline
 
@@ -70,7 +70,7 @@ Or compare existing reports directly:
 
 ```sh
 node benchmarks/compare.mjs \
-  --plainview benchmarks/results/plainview.json \
+  --plain benchmarks/results/plain.json \
   --browser benchmarks/results/browser-chromium.json \
   --out benchmarks/results/comparison.json \
   --policy smoke
@@ -97,7 +97,7 @@ The gate fails unless the comparison has:
 - at least 30% lower text-only and image-mode median load/render time for those respective speed claims
 - optional resident-memory claims approved only when both reports include memory samples and Plain shows at least 30% lower median resident memory after load
 
-For Plain `1.1.0`, the fresh May 22, 2026 benchmark run supports byte, request, speed, and 0-page-JavaScript claims, but the full marketing gate did not pass because resident-memory reductions were below the 30% threshold. Do not publish a current `1.1.0` memory-reduction claim unless a later run passes that policy.
+The May 22, 2026 benchmark run supports byte, request, speed, and 0-page-JavaScript claims. Current benchmark-backed claims exclude resident-memory reduction claims because that run did not satisfy the memory policy threshold.
 
 ## Power Measurement Gate
 

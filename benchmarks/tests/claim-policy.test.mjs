@@ -144,7 +144,7 @@ function comparisonFixture({
     {
       label: "text-only-bytes",
       kind: "comparative",
-      plainviewMode: "text-only",
+      plainMode: "text-only",
       pairedEvidence: dataset({ urls: pairedUrls, iterations, successRate: pairedSuccessRate }),
       reductionPercent: textReduction,
       statement: "Plain text-only downloaded fewer bytes.",
@@ -152,7 +152,7 @@ function comparisonFixture({
     {
       label: "text-only-requests",
       kind: "comparative",
-      plainviewMode: "text-only",
+      plainMode: "text-only",
       pairedEvidence: dataset({ urls: pairedUrls, iterations, successRate: pairedSuccessRate }),
       reductionPercent: requestReduction,
       statement: "Plain text-only made fewer requests.",
@@ -160,7 +160,7 @@ function comparisonFixture({
     {
       label: "text-only-time",
       kind: "comparative",
-      plainviewMode: "text-only",
+      plainMode: "text-only",
       pairedEvidence: dataset({ urls: pairedUrls, iterations, successRate: pairedSuccessRate }),
       reductionPercent: textTimeReduction,
       statement: "Plain text-only reached a rendered document sooner.",
@@ -168,7 +168,7 @@ function comparisonFixture({
     {
       label: "images-bytes",
       kind: "comparative",
-      plainviewMode: "images",
+      plainMode: "images",
       pairedEvidence: dataset({ urls: pairedUrls, iterations, successRate: pairedSuccessRate }),
       reductionPercent: imageReduction,
       statement: "Plain images downloaded fewer bytes.",
@@ -176,7 +176,7 @@ function comparisonFixture({
     {
       label: "images-time",
       kind: "comparative",
-      plainviewMode: "images",
+      plainMode: "images",
       pairedEvidence: dataset({ urls: pairedUrls, iterations, successRate: pairedSuccessRate }),
       reductionPercent: imageTimeReduction,
       statement: "Plain images reached a rendered document sooner.",
@@ -195,7 +195,7 @@ function comparisonFixture({
       {
         label: "text-only-memory",
         kind: "comparative",
-        plainviewMode: "text-only",
+        plainMode: "text-only",
         pairedEvidence: dataset({ urls: pairedUrls, iterations, successRate: pairedSuccessRate }),
         reductionPercent: textMemoryReduction,
         statement: "Plain text-only used less resident memory.",
@@ -207,7 +207,7 @@ function comparisonFixture({
       {
         label: "images-memory",
         kind: "comparative",
-        plainviewMode: "images",
+        plainMode: "images",
         pairedEvidence: dataset({ urls: pairedUrls, iterations, successRate: pairedSuccessRate }),
         reductionPercent: imageMemoryReduction,
         statement: "Plain images used less resident memory.",
@@ -218,7 +218,7 @@ function comparisonFixture({
   return {
     generatedAt: now,
     inputs: {
-      plainview: "plainview.json",
+      plain: "plain.json",
       browser: "browser.json",
       browserName: "chromium",
     },
@@ -239,7 +239,7 @@ function comparisonFixture({
     },
     evidence: {
       inputSkewHours: 1,
-      plainview: {
+      plain: {
         generatedAt: now,
         iterations,
         uniqueUrlCount: urls,
@@ -259,7 +259,7 @@ function comparisonFixture({
       },
     },
     summary: {
-      plainviewTextOnly: {
+      plainTextOnly: {
         runs: urls * iterations,
         medianTimeMilliseconds: textMilliseconds,
         medianTransferBytes: textBytes,
@@ -267,7 +267,7 @@ function comparisonFixture({
         medianResidentBytes: textMemory,
         medianScriptBytes: 0,
       },
-      plainviewImages: {
+      plainImages: {
         runs: urls * iterations,
         medianTimeMilliseconds: imageMilliseconds,
         medianTransferBytes: imageBytes,

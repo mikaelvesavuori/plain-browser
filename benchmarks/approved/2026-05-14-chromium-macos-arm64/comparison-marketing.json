@@ -1,7 +1,7 @@
 {
   "generatedAt": "2026-05-14T18:08:26.837Z",
   "inputs": {
-    "plainview": "benchmarks/results/plainview-marketing.json",
+    "plain": "benchmarks/results/plain-marketing.json",
     "browser": "benchmarks/results/browser-marketing.json",
     "browserName": "chromium"
   },
@@ -60,7 +60,7 @@
     "sha256": "19f73cf74d3b260f683a4c63f587fb88f11da2c547f73f017b70c09a4cc5bcb7"
   },
   "evidence": {
-    "plainview": {
+    "plain": {
       "generatedAt": "2026-05-14T18:03:33Z",
       "toolVersion": "0.1.0",
       "iterations": 3,
@@ -114,7 +114,7 @@
     }
   },
   "summary": {
-    "plainviewTextOnly": {
+    "plainTextOnly": {
       "runs": 60,
       "medianTimeMilliseconds": 557.4570005,
       "medianTransferBytes": 103983,
@@ -132,7 +132,7 @@
       "medianThirdPartyHostCount": 1,
       "medianResidentBytes": 345120768
     },
-    "plainviewImages": {
+    "plainImages": {
       "runs": 60,
       "medianTimeMilliseconds": 505.856396,
       "medianTransferBytes": 103983,
@@ -164,7 +164,7 @@
     {
       "label": "text-only-bytes",
       "kind": "comparative",
-      "plainviewMode": "text-only",
+      "plainMode": "text-only",
       "metric": "transfer-bytes",
       "pairedEvidence": {
         "uniqueUrlCount": 20,
@@ -173,16 +173,16 @@
         "successfulRuns": 60,
         "successRate": 1
       },
-      "plainviewMedian": 103983,
+      "plainMedian": 103983,
       "browserMedian": 393267,
       "reductionPercent": 73.55918498119598,
-      "statement": "Across paired successful runs in this benchmark set, Plainview text-only downloaded 74% fewer bytes than the 60-run Chromium baseline median.",
-      "basis": "Median Plainview text-only transfer bytes vs median Chromium transfer bytes on matched successful URL/iteration pairs."
+      "statement": "Across paired successful runs in this benchmark set, Plain text-only downloaded 74% fewer bytes than the 60-run Chromium baseline median.",
+      "basis": "Median Plain text-only transfer bytes vs median Chromium transfer bytes on matched successful URL/iteration pairs."
     },
     {
       "label": "text-only-requests",
       "kind": "comparative",
-      "plainviewMode": "text-only",
+      "plainMode": "text-only",
       "metric": "request-count",
       "pairedEvidence": {
         "uniqueUrlCount": 20,
@@ -191,16 +191,16 @@
         "successfulRuns": 60,
         "successRate": 1
       },
-      "plainviewMedian": 1,
+      "plainMedian": 1,
       "browserMedian": 18,
       "reductionPercent": 94.44444444444444,
-      "statement": "Across paired successful runs in this benchmark set, Plainview text-only made 94% fewer requests than the Chromium baseline median.",
-      "basis": "Median Plainview text-only request count vs median Chromium request count on matched successful URL/iteration pairs."
+      "statement": "Across paired successful runs in this benchmark set, Plain text-only made 94% fewer requests than the Chromium baseline median.",
+      "basis": "Median Plain text-only request count vs median Chromium request count on matched successful URL/iteration pairs."
     },
     {
       "label": "text-only-time",
       "kind": "comparative",
-      "plainviewMode": "text-only",
+      "plainMode": "text-only",
       "metric": "load-render-time",
       "pairedEvidence": {
         "uniqueUrlCount": 20,
@@ -209,16 +209,16 @@
         "successfulRuns": 60,
         "successRate": 1
       },
-      "plainviewMedian": 557.4570005,
+      "plainMedian": 557.4570005,
       "browserMedian": 1444.7030000000013,
       "reductionPercent": 61.413729984640476,
-      "statement": "Across paired successful runs in this benchmark set, Plainview text-only reached a rendered native document 61% sooner than Chromium full page load.",
-      "basis": "Median Plainview text-only load-to-native-document time vs median Chromium full page load time on matched successful URL/iteration pairs."
+      "statement": "Across paired successful runs in this benchmark set, Plain text-only reached a rendered native document 61% sooner than Chromium full page load.",
+      "basis": "Median Plain text-only load-to-native-document time vs median Chromium full page load time on matched successful URL/iteration pairs."
     },
     {
       "label": "text-only-memory",
       "kind": "comparative",
-      "plainviewMode": "text-only",
+      "plainMode": "text-only",
       "metric": "resident-memory",
       "pairedEvidence": {
         "uniqueUrlCount": 20,
@@ -227,16 +227,16 @@
         "successfulRuns": 60,
         "successRate": 1
       },
-      "plainviewMedian": 126787584,
+      "plainMedian": 126787584,
       "browserMedian": 345120768,
       "reductionPercent": 63.26283557644378,
-      "statement": "Across paired successful runs in this benchmark set, Plainview text-only used 63% less resident memory than Chromium after load.",
-      "basis": "Median Plainview text-only resident memory after load vs median Chromium browser process-tree resident memory after load on matched successful URL/iteration pairs."
+      "statement": "Across paired successful runs in this benchmark set, Plain text-only used 63% less resident memory than Chromium after load.",
+      "basis": "Median Plain text-only resident memory after load vs median Chromium browser process-tree resident memory after load on matched successful URL/iteration pairs."
     },
     {
       "label": "images-bytes",
       "kind": "comparative",
-      "plainviewMode": "images",
+      "plainMode": "images",
       "metric": "transfer-bytes",
       "pairedEvidence": {
         "uniqueUrlCount": 20,
@@ -245,16 +245,16 @@
         "successfulRuns": 60,
         "successRate": 1
       },
-      "plainviewMedian": 103983,
+      "plainMedian": 103983,
       "browserMedian": 393267,
       "reductionPercent": 73.55918498119598,
-      "statement": "Across paired successful runs in this benchmark set, Plainview with images downloaded 74% fewer bytes than the Chromium baseline median.",
-      "basis": "Median Plainview image-mode transfer bytes vs median Chromium transfer bytes on matched successful URL/iteration pairs."
+      "statement": "Across paired successful runs in this benchmark set, Plain with images downloaded 74% fewer bytes than the Chromium baseline median.",
+      "basis": "Median Plain image-mode transfer bytes vs median Chromium transfer bytes on matched successful URL/iteration pairs."
     },
     {
       "label": "images-time",
       "kind": "comparative",
-      "plainviewMode": "images",
+      "plainMode": "images",
       "metric": "load-render-time",
       "pairedEvidence": {
         "uniqueUrlCount": 20,
@@ -263,16 +263,16 @@
         "successfulRuns": 60,
         "successRate": 1
       },
-      "plainviewMedian": 505.856396,
+      "plainMedian": 505.856396,
       "browserMedian": 1444.7030000000013,
       "reductionPercent": 64.98544019082127,
-      "statement": "Across paired successful runs in this benchmark set, Plainview with images reached a rendered native document 65% sooner than Chromium full page load.",
-      "basis": "Median Plainview image-mode load-to-native-document time vs median Chromium full page load time on matched successful URL/iteration pairs."
+      "statement": "Across paired successful runs in this benchmark set, Plain with images reached a rendered native document 65% sooner than Chromium full page load.",
+      "basis": "Median Plain image-mode load-to-native-document time vs median Chromium full page load time on matched successful URL/iteration pairs."
     },
     {
       "label": "images-memory",
       "kind": "comparative",
-      "plainviewMode": "images",
+      "plainMode": "images",
       "metric": "resident-memory",
       "pairedEvidence": {
         "uniqueUrlCount": 20,
@@ -281,18 +281,18 @@
         "successfulRuns": 60,
         "successRate": 1
       },
-      "plainviewMedian": 118169600,
+      "plainMedian": 118169600,
       "browserMedian": 345120768,
       "reductionPercent": 65.75992784067982,
-      "statement": "Across paired successful runs in this benchmark set, Plainview with images used 66% less resident memory than Chromium after load.",
-      "basis": "Median Plainview image-mode resident memory after load vs median Chromium browser process-tree resident memory after load on matched successful URL/iteration pairs."
+      "statement": "Across paired successful runs in this benchmark set, Plain with images used 66% less resident memory than Chromium after load.",
+      "basis": "Median Plain image-mode resident memory after load vs median Chromium browser process-tree resident memory after load on matched successful URL/iteration pairs."
     },
     {
       "label": "javascript",
       "kind": "architectural",
       "metric": "page-javascript-execution",
-      "statement": "Plainview executed 0 page JavaScript by design.",
-      "basis": "Plainview fetches HTML and renders a native document model without WebView execution."
+      "statement": "Plain executed 0 page JavaScript by design.",
+      "basis": "Plain fetches HTML and renders a native document model without WebView execution."
     }
   ],
   "validation": {
@@ -344,7 +344,7 @@
       {
         "label": "text-only-bytes",
         "kind": "comparative",
-        "plainviewMode": "text-only",
+        "plainMode": "text-only",
         "metric": "transfer-bytes",
         "pairedEvidence": {
           "uniqueUrlCount": 20,
@@ -353,16 +353,16 @@
           "successfulRuns": 60,
           "successRate": 1
         },
-        "plainviewMedian": 103983,
+        "plainMedian": 103983,
         "browserMedian": 393267,
         "reductionPercent": 73.55918498119598,
-        "statement": "Across paired successful runs in this benchmark set, Plainview text-only downloaded 74% fewer bytes than the 60-run Chromium baseline median.",
-        "basis": "Median Plainview text-only transfer bytes vs median Chromium transfer bytes on matched successful URL/iteration pairs."
+        "statement": "Across paired successful runs in this benchmark set, Plain text-only downloaded 74% fewer bytes than the 60-run Chromium baseline median.",
+        "basis": "Median Plain text-only transfer bytes vs median Chromium transfer bytes on matched successful URL/iteration pairs."
       },
       {
         "label": "text-only-requests",
         "kind": "comparative",
-        "plainviewMode": "text-only",
+        "plainMode": "text-only",
         "metric": "request-count",
         "pairedEvidence": {
           "uniqueUrlCount": 20,
@@ -371,16 +371,16 @@
           "successfulRuns": 60,
           "successRate": 1
         },
-        "plainviewMedian": 1,
+        "plainMedian": 1,
         "browserMedian": 18,
         "reductionPercent": 94.44444444444444,
-        "statement": "Across paired successful runs in this benchmark set, Plainview text-only made 94% fewer requests than the Chromium baseline median.",
-        "basis": "Median Plainview text-only request count vs median Chromium request count on matched successful URL/iteration pairs."
+        "statement": "Across paired successful runs in this benchmark set, Plain text-only made 94% fewer requests than the Chromium baseline median.",
+        "basis": "Median Plain text-only request count vs median Chromium request count on matched successful URL/iteration pairs."
       },
       {
         "label": "text-only-time",
         "kind": "comparative",
-        "plainviewMode": "text-only",
+        "plainMode": "text-only",
         "metric": "load-render-time",
         "pairedEvidence": {
           "uniqueUrlCount": 20,
@@ -389,16 +389,16 @@
           "successfulRuns": 60,
           "successRate": 1
         },
-        "plainviewMedian": 557.4570005,
+        "plainMedian": 557.4570005,
         "browserMedian": 1444.7030000000013,
         "reductionPercent": 61.413729984640476,
-        "statement": "Across paired successful runs in this benchmark set, Plainview text-only reached a rendered native document 61% sooner than Chromium full page load.",
-        "basis": "Median Plainview text-only load-to-native-document time vs median Chromium full page load time on matched successful URL/iteration pairs."
+        "statement": "Across paired successful runs in this benchmark set, Plain text-only reached a rendered native document 61% sooner than Chromium full page load.",
+        "basis": "Median Plain text-only load-to-native-document time vs median Chromium full page load time on matched successful URL/iteration pairs."
       },
       {
         "label": "text-only-memory",
         "kind": "comparative",
-        "plainviewMode": "text-only",
+        "plainMode": "text-only",
         "metric": "resident-memory",
         "pairedEvidence": {
           "uniqueUrlCount": 20,
@@ -407,16 +407,16 @@
           "successfulRuns": 60,
           "successRate": 1
         },
-        "plainviewMedian": 126787584,
+        "plainMedian": 126787584,
         "browserMedian": 345120768,
         "reductionPercent": 63.26283557644378,
-        "statement": "Across paired successful runs in this benchmark set, Plainview text-only used 63% less resident memory than Chromium after load.",
-        "basis": "Median Plainview text-only resident memory after load vs median Chromium browser process-tree resident memory after load on matched successful URL/iteration pairs."
+        "statement": "Across paired successful runs in this benchmark set, Plain text-only used 63% less resident memory than Chromium after load.",
+        "basis": "Median Plain text-only resident memory after load vs median Chromium browser process-tree resident memory after load on matched successful URL/iteration pairs."
       },
       {
         "label": "images-bytes",
         "kind": "comparative",
-        "plainviewMode": "images",
+        "plainMode": "images",
         "metric": "transfer-bytes",
         "pairedEvidence": {
           "uniqueUrlCount": 20,
@@ -425,16 +425,16 @@
           "successfulRuns": 60,
           "successRate": 1
         },
-        "plainviewMedian": 103983,
+        "plainMedian": 103983,
         "browserMedian": 393267,
         "reductionPercent": 73.55918498119598,
-        "statement": "Across paired successful runs in this benchmark set, Plainview with images downloaded 74% fewer bytes than the Chromium baseline median.",
-        "basis": "Median Plainview image-mode transfer bytes vs median Chromium transfer bytes on matched successful URL/iteration pairs."
+        "statement": "Across paired successful runs in this benchmark set, Plain with images downloaded 74% fewer bytes than the Chromium baseline median.",
+        "basis": "Median Plain image-mode transfer bytes vs median Chromium transfer bytes on matched successful URL/iteration pairs."
       },
       {
         "label": "images-time",
         "kind": "comparative",
-        "plainviewMode": "images",
+        "plainMode": "images",
         "metric": "load-render-time",
         "pairedEvidence": {
           "uniqueUrlCount": 20,
@@ -443,16 +443,16 @@
           "successfulRuns": 60,
           "successRate": 1
         },
-        "plainviewMedian": 505.856396,
+        "plainMedian": 505.856396,
         "browserMedian": 1444.7030000000013,
         "reductionPercent": 64.98544019082127,
-        "statement": "Across paired successful runs in this benchmark set, Plainview with images reached a rendered native document 65% sooner than Chromium full page load.",
-        "basis": "Median Plainview image-mode load-to-native-document time vs median Chromium full page load time on matched successful URL/iteration pairs."
+        "statement": "Across paired successful runs in this benchmark set, Plain with images reached a rendered native document 65% sooner than Chromium full page load.",
+        "basis": "Median Plain image-mode load-to-native-document time vs median Chromium full page load time on matched successful URL/iteration pairs."
       },
       {
         "label": "images-memory",
         "kind": "comparative",
-        "plainviewMode": "images",
+        "plainMode": "images",
         "metric": "resident-memory",
         "pairedEvidence": {
           "uniqueUrlCount": 20,
@@ -461,18 +461,18 @@
           "successfulRuns": 60,
           "successRate": 1
         },
-        "plainviewMedian": 118169600,
+        "plainMedian": 118169600,
         "browserMedian": 345120768,
         "reductionPercent": 65.75992784067982,
-        "statement": "Across paired successful runs in this benchmark set, Plainview with images used 66% less resident memory than Chromium after load.",
-        "basis": "Median Plainview image-mode resident memory after load vs median Chromium browser process-tree resident memory after load on matched successful URL/iteration pairs."
+        "statement": "Across paired successful runs in this benchmark set, Plain with images used 66% less resident memory than Chromium after load.",
+        "basis": "Median Plain image-mode resident memory after load vs median Chromium browser process-tree resident memory after load on matched successful URL/iteration pairs."
       },
       {
         "label": "javascript",
         "kind": "architectural",
         "metric": "page-javascript-execution",
-        "statement": "Plainview executed 0 page JavaScript by design.",
-        "basis": "Plainview fetches HTML and renders a native document model without WebView execution."
+        "statement": "Plain executed 0 page JavaScript by design.",
+        "basis": "Plain fetches HTML and renders a native document model without WebView execution."
       }
     ],
     "rejectedClaims": []

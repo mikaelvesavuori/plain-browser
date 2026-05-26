@@ -277,8 +277,8 @@ struct BenchmarkOptions {
     var urls: [String] = []
     var iterations = 1
     var mode: BenchmarkModeSelection = .both
-    var outputJSON = URL(fileURLWithPath: "benchmarks/results/plainview.json")
-    var outputMarkdown = URL(fileURLWithPath: "benchmarks/results/plainview.md")
+    var outputJSON = URL(fileURLWithPath: "benchmarks/results/plain.json")
+    var outputMarkdown = URL(fileURLWithPath: "benchmarks/results/plain.md")
 
     init(arguments: [String]) throws {
         var iterator = Array(arguments.dropFirst()).makeIterator()

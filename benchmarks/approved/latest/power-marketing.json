@@ -74,15 +74,15 @@
       "idleAdjustedEstimatedSocEnergyJoules": 3.989,
       "rawOutput": "benchmarks/results/power-raw/powermetrics-idle.txt"
     },
-    "plainview": {
+    "plain": {
       "sampleCount": 42,
       "durationMilliseconds": 42447,
       "averageEstimatedSocPowerMilliwatts": 1429.2619047619048,
       "idleAverageMilliwatts": 265.93333333333334,
       "grossEstimatedSocEnergyJoules": 60.66788007142858,
       "idleAdjustedEstimatedSocEnergyJoules": 49.379807871428575,
-      "rawOutput": "benchmarks/results/power-raw/powermetrics-plainview.txt",
-      "command": "/Users/mikaelvesavuori/Web/browser/.build/arm64-apple-macosx/release/PlainviewBench --urls benchmarks/urls-marketing.txt --iterations 3 --mode both --out benchmarks/results/plainview-power.json"
+      "rawOutput": "benchmarks/results/power-raw/powermetrics-plain.txt",
+      "command": "/Users/mikaelvesavuori/Web/browser/.build/arm64-apple-macosx/release/PlainBench --urls benchmarks/urls-marketing.txt --iterations 3 --mode both --out benchmarks/results/plain-power.json"
     },
     "browser": {
       "sampleCount": 116,
@@ -96,10 +96,10 @@
     }
   },
   "comparison": {
-    "plainviewIdleAdjustedJoules": 49.379807871428575,
+    "plainIdleAdjustedJoules": 49.379807871428575,
     "browserIdleAdjustedJoules": 76.5631944321839,
     "idleAdjustedEnergyReductionPercent": 35.50450939561188,
-    "plainviewGrossJoules": 60.66788007142858,
+    "plainGrossJoules": 60.66788007142858,
     "browserGrossJoules": 107.67127796551725,
     "grossEnergyReductionPercent": 43.65453701510068
   },
@@ -121,10 +121,10 @@
         "label": "idle-adjusted-estimated-soc-energy",
         "kind": "power",
         "metric": "idle-adjusted-estimated-soc-energy-joules",
-        "plainviewValue": 49.379807871428575,
+        "plainValue": 49.379807871428575,
         "browserValue": 76.5631944321839,
         "reductionPercent": 35.50450939561188,
-        "statement": "In this measured local run, Plainview used 36% less idle-adjusted estimated SoC energy than the Chromium baseline.",
+        "statement": "In this measured local run, Plain used 36% less idle-adjusted estimated SoC energy than the Chromium baseline.",
         "basis": "macOS powermetrics estimated CPU/GPU/ANE power integrated over matched benchmark workloads on the same machine."
       }
     ],

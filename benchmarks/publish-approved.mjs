@@ -56,8 +56,8 @@ async function readArtifactInputs(paths) {
   return {
     comparisonJson: await fs.readFile(paths.comparison, "utf8"),
     comparisonMarkdown: await fs.readFile(replaceExtension(paths.comparison, ".md"), "utf8"),
-    plainviewJson: await fs.readFile(paths.plainview, "utf8"),
-    plainviewMarkdown: await fs.readFile(replaceExtension(paths.plainview, ".md"), "utf8"),
+    plainJson: await fs.readFile(paths.plain, "utf8"),
+    plainMarkdown: await fs.readFile(replaceExtension(paths.plain, ".md"), "utf8"),
     browserJson: await fs.readFile(paths.browser, "utf8"),
     browserMarkdown: await fs.readFile(replaceExtension(paths.browser, ".md"), "utf8"),
     urlsText: await fs.readFile(paths.urls, "utf8"),
@@ -69,8 +69,8 @@ async function readArtifactInputs(paths) {
 async function writeReportSet(destinationDir, inputs) {
   await fs.writeFile(path.join(destinationDir, "comparison-marketing.json"), inputs.comparisonJson);
   await fs.writeFile(path.join(destinationDir, "comparison-marketing.md"), inputs.comparisonMarkdown);
-  await fs.writeFile(path.join(destinationDir, "plainview-marketing.json"), inputs.plainviewJson);
-  await fs.writeFile(path.join(destinationDir, "plainview-marketing.md"), inputs.plainviewMarkdown);
+  await fs.writeFile(path.join(destinationDir, "plain-marketing.json"), inputs.plainJson);
+  await fs.writeFile(path.join(destinationDir, "plain-marketing.md"), inputs.plainMarkdown);
   await fs.writeFile(path.join(destinationDir, "browser-marketing.json"), inputs.browserJson);
   await fs.writeFile(path.join(destinationDir, "browser-marketing.md"), inputs.browserMarkdown);
   await fs.writeFile(path.join(destinationDir, "urls-marketing.txt"), inputs.urlsText);
@@ -94,7 +94,7 @@ async function writeManifest(filePath, comparison, validation, paths) {
     environment: comparison.environment,
     sourceFiles: {
       comparison: paths.comparison,
-      plainview: paths.plainview,
+      plain: paths.plain,
       browser: paths.browser,
       urls: paths.urls,
       power: paths.power,
@@ -126,7 +126,7 @@ function replaceExtension(filePath, extension) {
 function parseArgs(args) {
   const options = {
     comparison: "benchmarks/results/comparison-marketing.json",
-    plainview: "benchmarks/results/plainview-marketing.json",
+    plain: "benchmarks/results/plain-marketing.json",
     browser: "benchmarks/results/browser-marketing.json",
     urls: "benchmarks/urls-marketing.txt",
     power: null,
@@ -143,14 +143,14 @@ function parseArgs(args) {
     };
 
     if (arg === "--comparison") options.comparison = next();
-    else if (arg === "--plainview") options.plainview = next();
+    else if (arg === "--plain") options.plain = next();
     else if (arg === "--browser") options.browser = next();
     else if (arg === "--urls") options.urls = next();
     else if (arg === "--power") options.power = next();
     else if (arg === "--out-dir") options.outDir = next();
     else if (arg === "--slug") options.slug = next();
     else if (arg === "--help" || arg === "-h") {
-      console.log("Usage: node benchmarks/publish-approved.mjs --comparison benchmarks/results/comparison-marketing.json --plainview benchmarks/results/plainview-marketing.json --browser benchmarks/results/browser-marketing.json");
+      console.log("Usage: node benchmarks/publish-approved.mjs --comparison benchmarks/results/comparison-marketing.json --plain benchmarks/results/plain-marketing.json --browser benchmarks/results/browser-marketing.json");
       process.exit(0);
     } else {
       throw new Error(`Unknown option: ${arg}`);

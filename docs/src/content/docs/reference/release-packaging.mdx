@@ -30,8 +30,8 @@ make package-fast
 Publish a versioned GitHub Release with:
 
 ```sh
-git tag v1.1.0
-git push origin v1.1.0
+git tag v1.1.1
+git push origin v1.1.1
 ```
 
 The release workflow builds the app on macOS, derives `CFBundleShortVersionString` and artifact names from the tag, and uploads the `.dmg`, `.zip`, and `SHA256SUMS.txt` as release assets.
@@ -78,7 +78,7 @@ Plain does not include automatic downloads or in-app installation. Users update 
 - clear history
 - clear image cache
 - Open in Default Browser
-- `plain://open?url=<encoded-url>` handoff support, with legacy `plainview://` accepted
+- `plain://open?url=<encoded-url>` handoff support
 - local/private/reserved-network URL blocking inspired by the Reader Worker safety envelope
 - DNS/IP resolution checks before page and image fetches
 - 15-second HTML fetch timeout and 2 MB HTML response limit

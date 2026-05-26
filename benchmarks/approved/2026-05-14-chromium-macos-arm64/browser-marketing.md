@@ -6,7 +6,7 @@
 - Iterations: 3
 - Successful runs: 60/60
 
-This is a full browser baseline with JavaScript enabled. Compare against Plainview only when both reports were captured on the same machine and network.
+This is a full browser baseline with JavaScript enabled. Compare against Plain only when both reports were captured on the same machine and network.
 
 ## Summary
 

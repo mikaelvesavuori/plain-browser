@@ -16,7 +16,7 @@ public struct ReleaseUpdateChecker: Sendable {
     public var userAgent: String
 
     public init(
-        latestReleaseURL: URL = URL(string: "https://api.github.com/repos/mikaelvesavuori/plainview/releases/latest")!,
+        latestReleaseURL: URL = URL(string: "https://api.github.com/repos/mikaelvesavuori/plain-browser/releases/latest")!,
         session: URLSession = URLSession(configuration: .ephemeral),
         userAgent: String = "Plain"
     ) {

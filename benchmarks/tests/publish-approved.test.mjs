@@ -12,7 +12,7 @@ const execFileAsync = promisify(execFile);
 const publishScript = new URL("../publish-approved.mjs", import.meta.url);
 
 test("publisher can republish from approved latest without deleting its own inputs", async () => {
-  const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), "plainview-publish-"));
+  const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), "plain-publish-"));
 
   try {
     const approvedDir = path.join(tempRoot, "approved");
@@ -24,8 +24,8 @@ test("publisher can republish from approved latest without deleting its own inpu
 
     await writeText(path.join(latestDir, "comparison-marketing.json"), JSON.stringify(comparison, null, 2));
     await writeText(path.join(latestDir, "comparison-marketing.md"), "# Comparison\n");
-    await writeText(path.join(latestDir, "plainview-marketing.json"), "{}\n");
-    await writeText(path.join(latestDir, "plainview-marketing.md"), "# Plain\n");
+    await writeText(path.join(latestDir, "plain-marketing.json"), "{}\n");
+    await writeText(path.join(latestDir, "plain-marketing.md"), "# Plain\n");
     await writeText(path.join(latestDir, "browser-marketing.json"), "{}\n");
     await writeText(path.join(latestDir, "browser-marketing.md"), "# Browser\n");
     await writeText(path.join(latestDir, "urls-marketing.txt"), "https://example.com\n");
@@ -36,8 +36,8 @@ test("publisher can republish from approved latest without deleting its own inpu
       publishScript.pathname,
       "--comparison",
       path.join(latestDir, "comparison-marketing.json"),
-      "--plainview",
-      path.join(latestDir, "plainview-marketing.json"),
+      "--plain",
+      path.join(latestDir, "plain-marketing.json"),
       "--browser",
       path.join(latestDir, "browser-marketing.json"),
       "--urls",
@@ -103,7 +103,7 @@ function comparisonFixture() {
     },
     evidence: {
       inputSkewHours: 0,
-      plainview: {
+      plain: {
         generatedAt,
         iterations,
         modes: {
@@ -119,13 +119,13 @@ function comparisonFixture() {
       },
     },
     summary: {
-      plainviewTextOnly: {
+      plainTextOnly: {
         medianTransferBytes: textBytes,
         medianRequestCount: textRequests,
         medianTimeMilliseconds: textMilliseconds,
         medianScriptBytes: 0,
       },
-      plainviewImages: {
+      plainImages: {
         medianTransferBytes: imageBytes,
         medianTimeMilliseconds: imageMilliseconds,
         medianScriptBytes: 0,
@@ -182,22 +182,22 @@ function powerReportFixture() {
     },
     measurements: {
       idle: measurement({ joules: 3 }),
-      plainview: measurement({ joules: 40 }),
+      plain: measurement({ joules: 40 }),
       browser: measurement({ joules: 100 }),
     },
     comparison: {
-      plainviewIdleAdjustedJoules: 40,
+      plainIdleAdjustedJoules: 40,
       browserIdleAdjustedJoules: 100,
       idleAdjustedEnergyReductionPercent: 60,
     },
   };
 }
 
-function claim(label, plainviewMode, reductionPercent) {
+function claim(label, plainMode, reductionPercent) {
   return {
     label,
     kind: "comparative",
-    plainviewMode,
+    plainMode,
     pairedEvidence: dataset({ urls: 20, iterations: 3 }),
     reductionPercent,
     statement: `${label} passed.`,

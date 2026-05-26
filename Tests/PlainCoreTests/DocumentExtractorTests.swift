@@ -19,7 +19,7 @@ final class DocumentExtractorTests: XCTestCase {
         XCTAssertEqual(document.siteName, "Example Journal")
         XCTAssertEqual(document.author, "A. Writer")
         XCTAssertEqual(document.extractionQuality, .strong)
-        XCTAssertEqual(document.images.first?.sourceURL.absoluteString, "https://example.com/images/plainview.png")
+        XCTAssertEqual(document.images.first?.sourceURL.absoluteString, "https://example.com/images/plain.png")
 
         XCTAssertTrue(document.elements.contains { element in
             if case .heading(1, "Plain Test Article") = element {

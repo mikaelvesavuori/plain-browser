@@ -23,12 +23,10 @@ struct LaterItem: Codable, Equatable, Identifiable {
 
 struct HistoryStore {
     private let key = "Plain.History"
-    private let legacyKey = "Plainview.History"
     private let limit = 20
 
     func load() -> [HistoryItem] {
-        guard let data = UserDefaults.standard.data(forKey: key)
-            ?? UserDefaults.standard.data(forKey: legacyKey) else {
+        guard let data = UserDefaults.standard.data(forKey: key) else {
             return []
         }
         return (try? JSONDecoder().decode([HistoryItem].self, from: data)) ?? []

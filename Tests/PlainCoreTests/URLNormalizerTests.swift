@@ -16,30 +16,30 @@ final class URLNormalizerTests: XCTestCase {
     func testNormalizeTurnsSearchTextIntoMojeekQuery() throws {
         let normalizer = URLNormalizer()
 
-        let url = try normalizer.normalize("plainview browser")
+        let url = try normalizer.normalize("plain browser")
 
         XCTAssertEqual(url.scheme, "https")
         XCTAssertEqual(url.host(), "www.mojeek.com")
         XCTAssertEqual(url.path(), "/search")
         XCTAssertEqual(URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems, [
-            URLQueryItem(name: "q", value: "plainview browser")
+            URLQueryItem(name: "q", value: "plain browser")
         ])
     }
 
     func testNormalizeTurnsBareWordsIntoMojeekQuery() throws {
         let normalizer = URLNormalizer()
 
-        let url = try normalizer.normalize("plainview")
+        let url = try normalizer.normalize("plain")
 
-        XCTAssertEqual(url.absoluteString, "https://www.mojeek.com/search?q=plainview")
+        XCTAssertEqual(url.absoluteString, "https://www.mojeek.com/search?q=plain")
     }
 
     func testNormalizeKeepsDomainLikeInputsAsURLs() throws {
         let normalizer = URLNormalizer()
 
-        let url = try normalizer.normalize("www.mojeek.com/search?q=plainview")
+        let url = try normalizer.normalize("www.mojeek.com/search?q=plain")
 
-        XCTAssertEqual(url.absoluteString, "https://www.mojeek.com/search?q=plainview")
+        XCTAssertEqual(url.absoluteString, "https://www.mojeek.com/search?q=plain")
     }
 
     func testNormalizeRejectsUnsupportedSchemes() throws {

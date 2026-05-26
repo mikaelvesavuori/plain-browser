@@ -1,4 +1,4 @@
-# Plainview Benchmark Report
+# Plain Benchmark Report
 
 - Generated: 2026-05-14T18:03:33Z
 - Iterations per mode: 3
@@ -6,7 +6,7 @@
 
 These numbers are local measurements on this machine and network. Use them for comparative claims only when the browser baseline was captured under the same conditions.
 
-## Plainview Text-Only
+## Plain Text-Only
 
 - Median time to rendered document: 557ms
 - Median HTML bytes: 104.0 KB
@@ -15,7 +15,7 @@ These numbers are local measurements on this machine and network. Use them for c
 - Median CPU time: 244ms
 - Median resident memory after load: 126.79 MB
 
-## Plainview Images
+## Plain Images
 
 - Median time to rendered document: 506ms
 - Median HTML bytes: 104.0 KB
@@ -151,7 +151,7 @@ These numbers are local measurements on this machine and network. Use them for c
 
 ## Claim-Safe Language
 
-- Plainview executes 0 page JavaScript by design.
-- Plainview avoids live web-app rendering and converts pages into a native document model.
-- In text-only mode, Plainview fetches no page images.
+- Plain executes 0 page JavaScript by design.
+- Plain avoids live web-app rendering and converts pages into a native document model.
+- In text-only mode, Plain fetches no page images.
 - Resource and energy claims should cite the benchmark set, date, hardware, browser baseline, and median values.

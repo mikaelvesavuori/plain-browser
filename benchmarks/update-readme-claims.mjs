@@ -18,9 +18,9 @@ await fs.writeFile(options.readme, updated);
 console.log(`Updated ${options.readme}`);
 
 function renderClaims(comparison, reportPath, power) {
-  const textSummary = comparison.summary.plainviewTextOnly;
+  const textSummary = comparison.summary.plainTextOnly;
   const browserTextSummary = comparison.summary.browserForTextOnly;
-  const imageSummary = comparison.summary.plainviewImages;
+  const imageSummary = comparison.summary.plainImages;
   const browserImageSummary = comparison.summary.browserForImages;
   const pairedText = comparison.evidence.paired["text-only"];
   const approvedLabels = new Set(comparison.validation.approvedClaims.map((claim) => claim.label));
@@ -67,7 +67,7 @@ function renderClaims(comparison, reportPath, power) {
   if (power?.validation?.passed) {
     const powerClaim = power.validation.approvedClaims.find((claim) => claim.label === "idle-adjusted-estimated-soc-energy");
     if (powerClaim) {
-      lines.push(`- Plain used ${formatPercent(powerClaim.reductionPercent)} less idle-adjusted estimated SoC energy than Chromium in the measured power run: ${formatJoules(powerClaim.plainviewValue)} vs ${formatJoules(powerClaim.browserValue)}. Power report: [benchmarks/approved/latest/power-marketing.md](benchmarks/approved/latest/power-marketing.md).`);
+      lines.push(`- Plain used ${formatPercent(powerClaim.reductionPercent)} less idle-adjusted estimated SoC energy than Chromium in the measured power run: ${formatJoules(powerClaim.plainValue)} vs ${formatJoules(powerClaim.browserValue)}. Power report: [benchmarks/approved/latest/power-marketing.md](benchmarks/approved/latest/power-marketing.md).`);
     }
   }
 

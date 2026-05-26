@@ -22,7 +22,7 @@ public struct URLHandoffParser: Sendable {
         }
 
         guard let scheme = url.scheme?.lowercased(),
-              scheme == "plain" || scheme == "plainview" else {
+              scheme == "plain" else {
             return nil
         }
 

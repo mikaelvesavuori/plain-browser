@@ -77,26 +77,26 @@ export function resolvePolicy(policy = "marketing", overrides = {}) {
   };
 }
 
-export function buildEvidence(plainviewReport, browserReport) {
-  const plainviewResults = Array.isArray(plainviewReport?.results) ? plainviewReport.results : [];
+export function buildEvidence(plainReport, browserReport) {
+  const plainResults = Array.isArray(plainReport?.results) ? plainReport.results : [];
   const browserResults = Array.isArray(browserReport?.results) ? browserReport.results : [];
-  const plainviewGeneratedAt = plainviewReport?.generatedAt || null;
+  const plainGeneratedAt = plainReport?.generatedAt || null;
   const browserGeneratedAt = browserReport?.generatedAt || null;
 
   return {
-    plainview: {
-      generatedAt: plainviewGeneratedAt,
-      toolVersion: plainviewReport?.toolVersion || null,
-      iterations: iterationCount(plainviewReport, plainviewResults),
-      ...datasetEvidence(plainviewResults),
+    plain: {
+      generatedAt: plainGeneratedAt,
+      toolVersion: plainReport?.toolVersion || null,
+      iterations: iterationCount(plainReport, plainResults),
+      ...datasetEvidence(plainResults),
       modes: {
         "text-only": {
-          iterations: iterationCount(plainviewReport, plainviewResults.filter((result) => result.mode === "text-only")),
-          ...datasetEvidence(plainviewResults.filter((result) => result.mode === "text-only")),
+          iterations: iterationCount(plainReport, plainResults.filter((result) => result.mode === "text-only")),
+          ...datasetEvidence(plainResults.filter((result) => result.mode === "text-only")),
         },
         images: {
-          iterations: iterationCount(plainviewReport, plainviewResults.filter((result) => result.mode === "images")),
-          ...datasetEvidence(plainviewResults.filter((result) => result.mode === "images")),
+          iterations: iterationCount(plainReport, plainResults.filter((result) => result.mode === "images")),
+          ...datasetEvidence(plainResults.filter((result) => result.mode === "images")),
         },
       },
     },
@@ -107,7 +107,7 @@ export function buildEvidence(plainviewReport, browserReport) {
       iterations: iterationCount(browserReport, browserResults),
       ...datasetEvidence(browserResults),
     },
-    inputSkewHours: inputSkewHours([plainviewGeneratedAt, browserGeneratedAt]),
+    inputSkewHours: inputSkewHours([plainGeneratedAt, browserGeneratedAt]),
   };
 }
 
@@ -207,12 +207,12 @@ function reasonsForClaim(claim, comparison, policy) {
   }
 
   const reasons = [];
-  const plainviewMode = claim.plainviewMode || inferPlainviewMode(claim.label);
+  const plainMode = claim.plainMode || inferPlainMode(claim.label);
   if (claim.pairedEvidence) {
-    reasons.push(...datasetReasons(`Paired ${plainviewMode} comparison`, claim.pairedEvidence, policy));
+    reasons.push(...datasetReasons(`Paired ${plainMode} comparison`, claim.pairedEvidence, policy));
   } else {
-    const plainviewEvidence = evidence.plainview?.modes?.[plainviewMode];
-    reasons.push(...datasetReasons(`Plain ${plainviewMode}`, plainviewEvidence, policy));
+    const plainEvidence = evidence.plain?.modes?.[plainMode];
+    reasons.push(...datasetReasons(`Plain ${plainMode}`, plainEvidence, policy));
     reasons.push(...datasetReasons("Browser baseline", evidence.browser, policy));
   }
 
@@ -235,8 +235,8 @@ function architecturalClaimReasons(claim, comparison) {
     return [];
   }
 
-  const textScriptBytes = comparison?.summary?.plainviewTextOnly?.medianScriptBytes || 0;
-  const imageScriptBytes = comparison?.summary?.plainviewImages?.medianScriptBytes || 0;
+  const textScriptBytes = comparison?.summary?.plainTextOnly?.medianScriptBytes || 0;
+  const imageScriptBytes = comparison?.summary?.plainImages?.medianScriptBytes || 0;
   const reasons = [];
 
   if (textScriptBytes !== 0) {
@@ -350,7 +350,7 @@ function inputSkewHours(values) {
   return (Math.max(...timestamps) - Math.min(...timestamps)) / HOUR_MS;
 }
 
-function inferPlainviewMode(label) {
+function inferPlainMode(label) {
   if (label === "images-bytes") return "images";
   return "text-only";
 }

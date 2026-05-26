@@ -32,7 +32,7 @@ test("power policy approves strong measured local energy reduction", () => {
 
 test("power policy rejects weak measured energy reduction", () => {
   const report = powerReportFixture({
-    plainviewJoules: 80,
+    plainJoules: 80,
     browserJoules: 100,
   });
   const validation = evaluatePowerReport(report, "marketing");
@@ -64,7 +64,7 @@ test("power sample summarizer computes idle-adjusted joules", () => {
 });
 
 function powerReportFixture({
-  plainviewJoules = 40,
+  plainJoules = 40,
   browserJoules = 100,
   sampleCount = 12,
 } = {}) {
@@ -97,13 +97,13 @@ function powerReportFixture({
     },
     measurements: {
       idle: measurement({ sampleCount, averagePower: 300 }),
-      plainview: measurement({ sampleCount, joules: plainviewJoules }),
+      plain: measurement({ sampleCount, joules: plainJoules }),
       browser: measurement({ sampleCount, joules: browserJoules }),
     },
     comparison: {
-      plainviewIdleAdjustedJoules: plainviewJoules,
+      plainIdleAdjustedJoules: plainJoules,
       browserIdleAdjustedJoules: browserJoules,
-      idleAdjustedEnergyReductionPercent: ((browserJoules - plainviewJoules) / browserJoules) * 100,
+      idleAdjustedEnergyReductionPercent: ((browserJoules - plainJoules) / browserJoules) * 100,
     },
   };
 }

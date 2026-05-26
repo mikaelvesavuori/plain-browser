@@ -13,10 +13,10 @@ import {
 } from "./claim-policy.mjs";
 
 const options = parseArgs(process.argv.slice(2));
-const plainview = JSON.parse(await fs.readFile(options.plainview, "utf8"));
+const plain = JSON.parse(await fs.readFile(options.plain, "utf8"));
 const browser = JSON.parse(await fs.readFile(options.browser, "utf8"));
 
-const comparison = buildComparison(plainview, browser);
+const comparison = buildComparison(plain, browser);
 
 await fs.mkdir(path.dirname(options.output), { recursive: true });
 await fs.writeFile(options.output, `${JSON.stringify(comparison, null, 2)}\n`);
@@ -25,20 +25,20 @@ await fs.writeFile(replaceExtension(options.output, ".md"), markdown(comparison)
 console.log(`Wrote ${options.output}`);
 console.log(`Wrote ${replaceExtension(options.output, ".md")}`);
 
-function buildComparison(plainviewReport, browserReport) {
-  const textPairs = pairedResults(plainviewReport.results, browserReport.results, "text-only");
-  const imagePairs = pairedResults(plainviewReport.results, browserReport.results, "images");
+function buildComparison(plainReport, browserReport) {
+  const textPairs = pairedResults(plainReport.results, browserReport.results, "text-only");
+  const imagePairs = pairedResults(plainReport.results, browserReport.results, "images");
   const browserResults = successful(browserReport.results);
-  const evidence = buildEvidence(plainviewReport, browserReport);
+  const evidence = buildEvidence(plainReport, browserReport);
   evidence.paired = {
     "text-only": textPairs.evidence,
     images: imagePairs.evidence,
   };
 
   const summary = {
-    plainviewTextOnly: summarizePlainview(textPairs.plainview),
+    plainTextOnly: summarizePlain(textPairs.plain),
     browserForTextOnly: summarizeBrowser(textPairs.browser),
-    plainviewImages: summarizePlainview(imagePairs.plainview),
+    plainImages: summarizePlain(imagePairs.plain),
     browserForImages: summarizeBrowser(imagePairs.browser),
     browser: summarizeBrowser(browserResults),
   };
@@ -46,12 +46,12 @@ function buildComparison(plainviewReport, browserReport) {
   const comparison = {
     generatedAt: new Date().toISOString(),
     inputs: {
-      plainview: options.plainview,
+      plain: options.plain,
       browser: options.browser,
       browserName: browserReport.browser,
     },
     environment: collectEnvironment(browserReport),
-    corpus: buildCorpus(plainviewReport, browserReport),
+    corpus: buildCorpus(plainReport, browserReport),
     evidence,
     summary,
     claims: claimCandidates(summary, evidence.paired),
@@ -61,7 +61,7 @@ function buildComparison(plainviewReport, browserReport) {
   return comparison;
 }
 
-function summarizePlainview(results) {
+function summarizePlain(results) {
   const residentMemoryValues = optionalNumbers(
     results.map((result) => result.residentBytesAfter ?? result.peakResidentBytes),
   );
@@ -97,9 +97,9 @@ function summarizeBrowser(results) {
 
 function claimCandidates(summary, pairedEvidence) {
   const {
-    plainviewTextOnly: textSummary,
+    plainTextOnly: textSummary,
     browserForTextOnly: browserTextSummary,
-    plainviewImages: imageSummary,
+    plainImages: imageSummary,
     browserForImages: browserImageSummary,
   } = summary;
   const claims = [];
@@ -109,10 +109,10 @@ function claimCandidates(summary, pairedEvidence) {
     claims.push({
       label: "text-only-bytes",
       kind: "comparative",
-      plainviewMode: "text-only",
+      plainMode: "text-only",
       metric: "transfer-bytes",
       pairedEvidence: pairedEvidence["text-only"],
-      plainviewMedian: textSummary.medianTransferBytes,
+      plainMedian: textSummary.medianTransferBytes,
       browserMedian: browserTextSummary.medianTransferBytes,
       reductionPercent,
       statement: `Across paired successful runs in this benchmark set, Plain text-only downloaded ${formatPercent(reductionPercent)} fewer bytes than the ${browserTextSummary.runs}-run Chromium baseline median.`,
@@ -123,10 +123,10 @@ function claimCandidates(summary, pairedEvidence) {
     claims.push({
       label: "text-only-requests",
       kind: "comparative",
-      plainviewMode: "text-only",
+      plainMode: "text-only",
       metric: "request-count",
       pairedEvidence: pairedEvidence["text-only"],
-      plainviewMedian: textSummary.medianRequestCount,
+      plainMedian: textSummary.medianRequestCount,
       browserMedian: browserTextSummary.medianRequestCount,
       reductionPercent: requestReductionPercent,
       statement: `Across paired successful runs in this benchmark set, Plain text-only made ${formatPercent(requestReductionPercent)} fewer requests than the Chromium baseline median.`,
@@ -140,10 +140,10 @@ function claimCandidates(summary, pairedEvidence) {
     claims.push({
       label: "text-only-time",
       kind: "comparative",
-      plainviewMode: "text-only",
+      plainMode: "text-only",
       metric: "load-render-time",
       pairedEvidence: pairedEvidence["text-only"],
-      plainviewMedian: textSummary.medianTimeMilliseconds,
+      plainMedian: textSummary.medianTimeMilliseconds,
       browserMedian: browserTextSummary.medianTimeMilliseconds,
       reductionPercent: timeReductionPercent,
       statement: `Across paired successful runs in this benchmark set, Plain text-only reached a rendered native document ${formatPercent(timeReductionPercent)} sooner than Chromium full page load.`,
@@ -158,10 +158,10 @@ function claimCandidates(summary, pairedEvidence) {
       claims.push({
         label: "text-only-memory",
         kind: "comparative",
-        plainviewMode: "text-only",
+        plainMode: "text-only",
         metric: "resident-memory",
         pairedEvidence: pairedEvidence["text-only"],
-        plainviewMedian: textSummary.medianResidentBytes,
+        plainMedian: textSummary.medianResidentBytes,
         browserMedian: browserTextSummary.medianResidentBytes,
         reductionPercent: memoryReductionPercent,
         statement: `Across paired successful runs in this benchmark set, Plain text-only used ${formatPercent(memoryReductionPercent)} less resident memory than Chromium after load.`,
@@ -175,10 +175,10 @@ function claimCandidates(summary, pairedEvidence) {
     claims.push({
       label: "images-bytes",
       kind: "comparative",
-      plainviewMode: "images",
+      plainMode: "images",
       metric: "transfer-bytes",
       pairedEvidence: pairedEvidence.images,
-      plainviewMedian: imageSummary.medianTransferBytes,
+      plainMedian: imageSummary.medianTransferBytes,
       browserMedian: browserImageSummary.medianTransferBytes,
       reductionPercent,
       statement: `Across paired successful runs in this benchmark set, Plain with images downloaded ${formatPercent(reductionPercent)} fewer bytes than the Chromium baseline median.`,
@@ -192,10 +192,10 @@ function claimCandidates(summary, pairedEvidence) {
     claims.push({
       label: "images-time",
       kind: "comparative",
-      plainviewMode: "images",
+      plainMode: "images",
       metric: "load-render-time",
       pairedEvidence: pairedEvidence.images,
-      plainviewMedian: imageSummary.medianTimeMilliseconds,
+      plainMedian: imageSummary.medianTimeMilliseconds,
       browserMedian: browserImageSummary.medianTimeMilliseconds,
       reductionPercent: timeReductionPercent,
       statement: `Across paired successful runs in this benchmark set, Plain with images reached a rendered native document ${formatPercent(timeReductionPercent)} sooner than Chromium full page load.`,
@@ -210,10 +210,10 @@ function claimCandidates(summary, pairedEvidence) {
       claims.push({
         label: "images-memory",
         kind: "comparative",
-        plainviewMode: "images",
+        plainMode: "images",
         metric: "resident-memory",
         pairedEvidence: pairedEvidence.images,
-        plainviewMedian: imageSummary.medianResidentBytes,
+        plainMedian: imageSummary.medianResidentBytes,
         browserMedian: browserImageSummary.medianResidentBytes,
         reductionPercent: memoryReductionPercent,
         statement: `Across paired successful runs in this benchmark set, Plain with images used ${formatPercent(memoryReductionPercent)} less resident memory than Chromium after load.`,
@@ -247,25 +247,25 @@ function markdown(comparison) {
   lines.push("");
   lines.push("| Metric | Plain Text-Only | Chromium Pair | Plain Images | Chromium Pair |");
   lines.push("| --- | ---: | ---: | ---: | ---: |");
-  lines.push(`| Runs | ${comparison.summary.plainviewTextOnly.runs} | ${comparison.summary.browserForTextOnly.runs} | ${comparison.summary.plainviewImages.runs} | ${comparison.summary.browserForImages.runs} |`);
-  lines.push(`| Median load/render time | ${formatMilliseconds(comparison.summary.plainviewTextOnly.medianTimeMilliseconds)} | ${formatMilliseconds(comparison.summary.browserForTextOnly.medianTimeMilliseconds)} | ${formatMilliseconds(comparison.summary.plainviewImages.medianTimeMilliseconds)} | ${formatMilliseconds(comparison.summary.browserForImages.medianTimeMilliseconds)} |`);
-  lines.push(`| Median transfer bytes | ${formatBytes(comparison.summary.plainviewTextOnly.medianTransferBytes)} | ${formatBytes(comparison.summary.browserForTextOnly.medianTransferBytes)} | ${formatBytes(comparison.summary.plainviewImages.medianTransferBytes)} | ${formatBytes(comparison.summary.browserForImages.medianTransferBytes)} |`);
-  lines.push(`| Median requests | ${comparison.summary.plainviewTextOnly.medianRequestCount.toFixed(1)} | ${comparison.summary.browserForTextOnly.medianRequestCount.toFixed(1)} | ${comparison.summary.plainviewImages.medianRequestCount.toFixed(1)} | ${comparison.summary.browserForImages.medianRequestCount.toFixed(1)} |`);
+  lines.push(`| Runs | ${comparison.summary.plainTextOnly.runs} | ${comparison.summary.browserForTextOnly.runs} | ${comparison.summary.plainImages.runs} | ${comparison.summary.browserForImages.runs} |`);
+  lines.push(`| Median load/render time | ${formatMilliseconds(comparison.summary.plainTextOnly.medianTimeMilliseconds)} | ${formatMilliseconds(comparison.summary.browserForTextOnly.medianTimeMilliseconds)} | ${formatMilliseconds(comparison.summary.plainImages.medianTimeMilliseconds)} | ${formatMilliseconds(comparison.summary.browserForImages.medianTimeMilliseconds)} |`);
+  lines.push(`| Median transfer bytes | ${formatBytes(comparison.summary.plainTextOnly.medianTransferBytes)} | ${formatBytes(comparison.summary.browserForTextOnly.medianTransferBytes)} | ${formatBytes(comparison.summary.plainImages.medianTransferBytes)} | ${formatBytes(comparison.summary.browserForImages.medianTransferBytes)} |`);
+  lines.push(`| Median requests | ${comparison.summary.plainTextOnly.medianRequestCount.toFixed(1)} | ${comparison.summary.browserForTextOnly.medianRequestCount.toFixed(1)} | ${comparison.summary.plainImages.medianRequestCount.toFixed(1)} | ${comparison.summary.browserForImages.medianRequestCount.toFixed(1)} |`);
   lines.push(`| Median script bytes | 0 B | ${formatBytes(comparison.summary.browserForTextOnly.medianScriptBytes)} | 0 B | ${formatBytes(comparison.summary.browserForImages.medianScriptBytes)} |`);
   if (
-    Number.isFinite(comparison.summary.plainviewTextOnly.medianResidentBytes) ||
+    Number.isFinite(comparison.summary.plainTextOnly.medianResidentBytes) ||
     Number.isFinite(comparison.summary.browserForTextOnly.medianResidentBytes) ||
-    Number.isFinite(comparison.summary.plainviewImages.medianResidentBytes) ||
+    Number.isFinite(comparison.summary.plainImages.medianResidentBytes) ||
     Number.isFinite(comparison.summary.browserForImages.medianResidentBytes)
   ) {
-    lines.push(`| Median resident memory after load | ${formatOptionalBytes(comparison.summary.plainviewTextOnly.medianResidentBytes)} | ${formatOptionalBytes(comparison.summary.browserForTextOnly.medianResidentBytes)} | ${formatOptionalBytes(comparison.summary.plainviewImages.medianResidentBytes)} | ${formatOptionalBytes(comparison.summary.browserForImages.medianResidentBytes)} |`);
+    lines.push(`| Median resident memory after load | ${formatOptionalBytes(comparison.summary.plainTextOnly.medianResidentBytes)} | ${formatOptionalBytes(comparison.summary.browserForTextOnly.medianResidentBytes)} | ${formatOptionalBytes(comparison.summary.plainImages.medianResidentBytes)} | ${formatOptionalBytes(comparison.summary.browserForImages.medianResidentBytes)} |`);
   }
   lines.push("");
   lines.push("## Evidence");
   lines.push("");
   lines.push(`- Required: ${comparison.validation.policy.minUniqueUrls}+ URLs, ${comparison.validation.policy.minIterations}+ iterations, ${formatPercent(comparison.validation.policy.minSuccessRate * 100)}+ success rate`);
-  lines.push(`- Plain text-only: ${formatEvidence(comparison.evidence.plainview.modes["text-only"])}`);
-  lines.push(`- Plain images: ${formatEvidence(comparison.evidence.plainview.modes.images)}`);
+  lines.push(`- Plain text-only: ${formatEvidence(comparison.evidence.plain.modes["text-only"])}`);
+  lines.push(`- Plain images: ${formatEvidence(comparison.evidence.plain.modes.images)}`);
   lines.push(`- Browser: ${formatEvidence(comparison.evidence.browser)}`);
   lines.push(`- Paired text-only comparison: ${formatEvidence(comparison.evidence.paired["text-only"])}`);
   lines.push(`- Paired image comparison: ${formatEvidence(comparison.evidence.paired.images)}`);
@@ -323,8 +323,8 @@ function successful(results) {
   return results.filter((result) => result.success);
 }
 
-function pairedResults(plainviewResults, browserResults, mode) {
-  const modeResults = plainviewResults.filter((result) => result.mode === mode);
+function pairedResults(plainResults, browserResults, mode) {
+  const modeResults = plainResults.filter((result) => result.mode === mode);
   const browserSuccessByKey = new Map(successful(browserResults).map((result) => [resultKey(result), result]));
   const expectedKeys = new Set([
     ...modeResults.map(resultKey),
@@ -332,21 +332,21 @@ function pairedResults(plainviewResults, browserResults, mode) {
   ]);
   const pairs = [];
 
-  for (const plainviewResult of modeResults) {
-    if (!plainviewResult.success) continue;
+  for (const plainResult of modeResults) {
+    if (!plainResult.success) continue;
 
-    const browserResult = browserSuccessByKey.get(resultKey(plainviewResult));
+    const browserResult = browserSuccessByKey.get(resultKey(plainResult));
     if (browserResult) {
-      pairs.push({ plainview: plainviewResult, browser: browserResult });
+      pairs.push({ plain: plainResult, browser: browserResult });
     }
   }
 
   return {
-    plainview: pairs.map((pair) => pair.plainview),
+    plain: pairs.map((pair) => pair.plain),
     browser: pairs.map((pair) => pair.browser),
     evidence: {
-      uniqueUrlCount: new Set(pairs.map((pair) => pair.plainview.url).filter(Boolean)).size,
-      iterations: iterationCount(pairs.map((pair) => pair.plainview)),
+      uniqueUrlCount: new Set(pairs.map((pair) => pair.plain.url).filter(Boolean)).size,
+      iterations: iterationCount(pairs.map((pair) => pair.plain)),
       totalRuns: expectedKeys.size,
       successfulRuns: pairs.length,
       successRate: expectedKeys.size ? pairs.length / expectedKeys.size : 0,
@@ -358,9 +358,9 @@ function resultKey(result) {
   return `${result.url}#${result.iteration}`;
 }
 
-function buildCorpus(plainviewReport, browserReport) {
+function buildCorpus(plainReport, browserReport) {
   const urls = [
-    ...extractUrls(plainviewReport),
+    ...extractUrls(plainReport),
     ...extractUrls(browserReport),
   ];
   const uniqueUrls = [...new Set(urls)].sort();
@@ -431,7 +431,7 @@ function sha256(value) {
 
 function parseArgs(args) {
   const options = {
-    plainview: "benchmarks/results/plainview.json",
+    plain: "benchmarks/results/plain.json",
     browser: "benchmarks/results/browser-chromium.json",
     output: "benchmarks/results/comparison.json",
     policy: "marketing",
@@ -445,12 +445,12 @@ function parseArgs(args) {
       return args[index];
     };
 
-    if (arg === "--plainview") options.plainview = next();
+    if (arg === "--plain") options.plain = next();
     else if (arg === "--browser") options.browser = next();
     else if (arg === "--out") options.output = next();
     else if (arg === "--policy") options.policy = next();
     else if (arg === "--help" || arg === "-h") {
-      console.log("Usage: node benchmarks/compare.mjs --plainview benchmarks/results/plainview.json --browser benchmarks/results/browser-chromium.json --policy marketing");
+      console.log("Usage: node benchmarks/compare.mjs --plain benchmarks/results/plain.json --browser benchmarks/results/browser-chromium.json --policy marketing");
       process.exit(0);
     } else {
       throw new Error(`Unknown option: ${arg}`);

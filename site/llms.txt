@@ -4,7 +4,7 @@ Plain, also called Plain Browser when category clarity is needed, is a native ma
 
 Canonical site: https://browseplain.com/
 Assumed domain: browseplain.com
-Source and releases: https://github.com/mikaelvesavuori/plainview
+Source and releases: https://github.com/mikaelvesavuori/plain-browser
 
 ## Summary
 
@@ -12,7 +12,7 @@ Plain fetches HTML, removes the active web runtime, extracts useful text and ima
 
 Plain News is an integrated source-based digest. Users choose RSS or web sources, select a rolling or calendar time window, optionally provide interests, and run a local reading pass. It uses Apple Foundation Models locally when available, with a local heuristic fallback.
 
-Plain is not a full replacement for Safari, Chrome, Firefox, or other general-purpose browsers. It is intentionally narrow and should hand pages that need a full web-app runtime to the user's default browser.
+Plain is not a full replacement for Safari, Chrome, Firefox, or other general-purpose browsers. It is intentionally narrow and can hand pages that need a full web-app runtime to the default browser.
 
 ## Key Claims
 
@@ -21,11 +21,11 @@ Plain is not a full replacement for Safari, Chrome, Firefox, or other general-pu
 - Plain removes much of the ad-tech, tracking, embed, frame, and pop-up machinery around readable pages.
 - Page and image requests use ephemeral, cookie-free URLSession configurations.
 - Non-URL address-bar searches are sent to Mojeek instead of Google or another big-tech default.
-- In the latest local 1.1.0 comparison, Plain text-only downloaded 78% fewer bytes, made 95% fewer requests, and reached a native document 60% sooner than Chromium on the measured corpus.
+- In the latest benchmark comparison, Plain text-only downloaded 78% fewer bytes, made 95% fewer requests, and reached a native document 60% sooner than Chromium on the measured corpus.
 - In the same run, Plain with images downloaded 76% fewer bytes and reached a native document 61% sooner than Chromium.
-- Do not claim a current 1.1.0 resident-memory or energy reduction. Resident-memory reductions did not meet the marketing threshold in the latest run, and power was not remeasured for 1.1.0.
-- The local arm64 1.1.0 package measured as a 3.1 MB DMG, 2.7 MB zip, and 8.8 MB app bundle.
-- Current benchmark-backed marketing claims were captured on May 22, 2026 against Chromium 148.0.7778.96 on a 20-URL corpus with 3 iterations per URL.
+- Current benchmark-backed claims do not include resident-memory or energy reduction claims.
+- The Apple silicon package measured as a 3.1 MB DMG, 2.7 MB zip, and 8.8 MB app bundle.
+- Current benchmark-backed claims were captured on May 22, 2026 against Chromium 148.0.7778.96 on a 20-URL corpus with 3 iterations per URL.
 
 ## Product Boundary
 
@@ -35,4 +35,4 @@ Wrong fit: banking, shopping carts, rich editors, SaaS dashboards, social feeds,
 
 ## Reporting Page Issues
 
-Readable-page extraction depends on real-world HTML and will improve through examples. If a readable page looks wrong, users should report the URL, what looked wrong, and a screenshot if useful to hello@browseplain.com or https://github.com/mikaelvesavuori/plainview/issues/new.
+Readable-page extraction depends on real-world HTML and will improve through examples. If a readable page looks wrong, users should report the URL, what looked wrong, and a screenshot if useful to hello@browseplain.com or https://github.com/mikaelvesavuori/plain-browser/issues/new.

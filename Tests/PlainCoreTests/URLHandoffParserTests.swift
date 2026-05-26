@@ -21,15 +21,6 @@ final class URLHandoffParserTests: XCTestCase {
         )
     }
 
-    func testParsesLegacyPlainviewOpenURL() {
-        let parser = URLHandoffParser()
-
-        XCTAssertEqual(
-            parser.sourceURL(from: "plainview://open?url=https%3A%2F%2Fexample.com%2Fread%3Fid%3D42")?.absoluteString,
-            "https://example.com/read?id=42"
-        )
-    }
-
     func testRejectsNonWebURLs() {
         let parser = URLHandoffParser()
 
