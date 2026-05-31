@@ -9,6 +9,8 @@ struct DocumentView: View {
     var selectedFindTarget: DocumentFindTarget?
     var topChromeInset: CGFloat
     var onOpenLink: (URL) -> Void
+    var onOpenExternalLink: (URL) -> Void
+    var onSaveImage: (ImageRef) -> Void
 
     private var contentMaxWidth: CGFloat {
         if document.elements.contains(where: \.isSearchResult) {
@@ -30,7 +32,9 @@ struct DocumentView: View {
                             element: element,
                             showsImages: showsImages,
                             readerSettings: readerSettings,
-                            onOpenLink: onOpenLink
+                            onOpenLink: onOpenLink,
+                            onOpenExternalLink: onOpenExternalLink,
+                            onSaveImage: onSaveImage
                         )
                         .id(DocumentFindTarget.element(index))
                         .findTargetHighlight(selectedFindTarget == .element(index))
@@ -72,7 +76,7 @@ struct DocumentView: View {
             if showsImages,
                let heroImage = document.heroImage,
                heroImage.localPath != nil {
-                ReaderHeroImageView(image: heroImage)
+                ReaderHeroImageView(image: heroImage, onSaveImage: onSaveImage, onOpenExternalLink: onOpenExternalLink)
                     .padding(.bottom, 4)
             }
 
@@ -221,22 +225,24 @@ private struct DocumentElementView: View {
     var showsImages: Bool
     var readerSettings: ReaderDisplaySettings
     var onOpenLink: (URL) -> Void
+    var onOpenExternalLink: (URL) -> Void
+    var onSaveImage: (ImageRef) -> Void
 
     var body: some View {
         switch element {
         case .heading(let level, let text):
             HeadingView(level: level, text: text, readerSettings: readerSettings)
         case .paragraph(let inline):
-            ParagraphView(inline: inline, readerSettings: readerSettings, onOpenLink: onOpenLink)
+            ParagraphView(inline: inline, readerSettings: readerSettings, onOpenLink: onOpenLink, onOpenExternalLink: onOpenExternalLink)
         case .searchResult(let result):
-            SearchResultView(result: result, readerSettings: readerSettings, onOpenLink: onOpenLink)
+            SearchResultView(result: result, readerSettings: readerSettings, onOpenLink: onOpenLink, onOpenExternalLink: onOpenExternalLink)
         case .image(let image):
             if showsImages {
-                ReaderImageView(image: image)
+                ReaderImageView(image: image, onSaveImage: onSaveImage, onOpenExternalLink: onOpenExternalLink)
             }
         case .figure(let image, let caption):
             if showsImages {
-                ReaderImageView(image: image, caption: caption)
+                ReaderImageView(image: image, caption: caption, onSaveImage: onSaveImage, onOpenExternalLink: onOpenExternalLink)
             }
         case .blockquote(let elements):
             VStack(alignment: .leading, spacing: 12) {
@@ -245,7 +251,9 @@ private struct DocumentElementView: View {
                         element: child,
                         showsImages: showsImages,
                         readerSettings: readerSettings,
-                        onOpenLink: onOpenLink
+                        onOpenLink: onOpenLink,
+                        onOpenExternalLink: onOpenExternalLink,
+                        onSaveImage: onSaveImage
                     )
                 }
             }
@@ -277,7 +285,9 @@ private struct DocumentElementView: View {
                                     element: child,
                                     showsImages: showsImages,
                                     readerSettings: readerSettings,
-                                    onOpenLink: onOpenLink
+                                    onOpenLink: onOpenLink,
+                                    onOpenExternalLink: onOpenExternalLink,
+                                    onSaveImage: onSaveImage
                                 )
                             }
                         }
@@ -304,7 +314,7 @@ private struct DocumentElementView: View {
             Divider()
                 .padding(.vertical, 10)
         case .linkPreview(let url, let text):
-            LinkPreviewView(url: url, text: text, readerSettings: readerSettings, onOpenLink: onOpenLink)
+            LinkPreviewView(url: url, text: text, readerSettings: readerSettings, onOpenLink: onOpenLink, onOpenExternalLink: onOpenExternalLink)
         }
     }
 }
@@ -322,12 +332,13 @@ private struct SearchResultView: View {
     var result: SearchResult
     var readerSettings: ReaderDisplaySettings
     var onOpenLink: (URL) -> Void
+    var onOpenExternalLink: (URL) -> Void
 
     @State private var isHovering = false
 
     var body: some View {
         Button {
-            onOpenLink(result.url)
+            open(result.url)
         } label: {
             VStack(alignment: .leading, spacing: 9) {
                 if let displayURL = result.displayURL {
@@ -378,6 +389,14 @@ private struct SearchResultView: View {
         }
         return Color(nsColor: .controlBackgroundColor).opacity(0.36)
     }
+
+    private func open(_ url: URL) {
+        if NSApp.currentEvent?.modifierFlags.intersection(.deviceIndependentFlagsMask).contains(.command) == true {
+            onOpenExternalLink(url)
+        } else {
+            onOpenLink(url)
+        }
+    }
 }
 
 private struct LinkPreviewView: View {
@@ -385,12 +404,13 @@ private struct LinkPreviewView: View {
     var text: String?
     var readerSettings: ReaderDisplaySettings
     var onOpenLink: (URL) -> Void
+    var onOpenExternalLink: (URL) -> Void
 
     @State private var isHovering = false
 
     var body: some View {
         Button {
-            onOpenLink(url)
+            open(url)
         } label: {
             HStack(spacing: 12) {
                 ZStack {
@@ -429,6 +449,14 @@ private struct LinkPreviewView: View {
         .pointingHandCursor()
         .onHover { isHovering = $0 }
     }
+
+    private func open(_ url: URL) {
+        if NSApp.currentEvent?.modifierFlags.intersection(.deviceIndependentFlagsMask).contains(.command) == true {
+            onOpenExternalLink(url)
+        } else {
+            onOpenLink(url)
+        }
+    }
 }
 
 private struct HeadingView: View {
@@ -462,6 +490,8 @@ private struct HeadingView: View {
 
 private struct ReaderHeroImageView: View {
     var image: ImageRef
+    var onSaveImage: (ImageRef) -> Void
+    var onOpenExternalLink: (URL) -> Void
 
     var body: some View {
         if let localPath = image.localPath,
@@ -478,6 +508,7 @@ private struct ReaderHeroImageView: View {
                         .stroke(Color(nsColor: .separatorColor).opacity(0.35), lineWidth: 1)
                 }
                 .shadow(color: .black.opacity(0.12), radius: 18, y: 8)
+                .imageActions(image: image, onSaveImage: onSaveImage, onOpenExternalLink: onOpenExternalLink)
         }
     }
 }
@@ -485,10 +516,19 @@ private struct ReaderHeroImageView: View {
 private struct ReaderImageView: View {
     var image: ImageRef
     var caption: String?
+    var onSaveImage: (ImageRef) -> Void
+    var onOpenExternalLink: (URL) -> Void
 
-    init(image: ImageRef, caption: String? = nil) {
+    init(
+        image: ImageRef,
+        caption: String? = nil,
+        onSaveImage: @escaping (ImageRef) -> Void,
+        onOpenExternalLink: @escaping (URL) -> Void
+    ) {
         self.image = image
         self.caption = caption ?? image.caption
+        self.onSaveImage = onSaveImage
+        self.onOpenExternalLink = onOpenExternalLink
     }
 
     var body: some View {
@@ -505,6 +545,7 @@ private struct ReaderImageView: View {
                             .stroke(Color(nsColor: .separatorColor).opacity(0.35), lineWidth: 1)
                     }
                     .shadow(color: .black.opacity(0.08), radius: 14, y: 5)
+                    .imageActions(image: image, onSaveImage: onSaveImage, onOpenExternalLink: onOpenExternalLink)
             } else {
                 VStack(alignment: .leading, spacing: 6) {
                     Image(systemName: "photo")
@@ -521,6 +562,7 @@ private struct ReaderImageView: View {
                     RoundedRectangle(cornerRadius: 8)
                         .stroke(Color(nsColor: .separatorColor).opacity(0.42), lineWidth: 1)
                 }
+                .imageActions(image: image, onSaveImage: onSaveImage, onOpenExternalLink: onOpenExternalLink)
             }
 
             if let caption, !caption.isEmpty {
@@ -533,6 +575,25 @@ private struct ReaderImageView: View {
             }
         }
         .padding(.vertical, 6)
+    }
+}
+
+private extension View {
+    func imageActions(
+        image: ImageRef,
+        onSaveImage: @escaping (ImageRef) -> Void,
+        onOpenExternalLink: @escaping (URL) -> Void
+    ) -> some View {
+        contextMenu {
+            Button("Save Image As...") {
+                onSaveImage(image)
+            }
+            .disabled(image.localPath == nil)
+
+            Button("Open Image in Default Browser") {
+                onOpenExternalLink(image.sourceURL)
+            }
+        }
     }
 }
 

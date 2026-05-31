@@ -599,7 +599,9 @@ struct BrowserView: View {
                 readerSettings: readerSettings,
                 selectedFindTarget: isFindPresented ? selectedFindMatch?.target : nil,
                 topChromeInset: toolbarContentInset,
-                onOpenLink: viewModel.openLink
+                onOpenLink: viewModel.openLink,
+                onOpenExternalLink: viewModel.openLinkInDefaultBrowser,
+                onSaveImage: viewModel.saveImage
             )
         case .failed(let failure):
             FailureView(
@@ -626,6 +628,7 @@ struct BrowserView: View {
                 onToggleSource: viewModel.toggleNewsSource,
                 onRemoveSource: viewModel.removeNewsSource,
                 onRun: viewModel.runPlainNews,
+                onCancelRun: viewModel.cancelPlainNews,
                 onClearDigest: viewModel.clearNewsDigest,
                 onOpenItem: viewModel.openNewsItem,
                 onSaveItemForLater: viewModel.saveNewsItemForLater

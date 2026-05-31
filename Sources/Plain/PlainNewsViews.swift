@@ -47,6 +47,7 @@ struct PlainNewsView: View {
     var onToggleSource: (PlainNewsSource) -> Void
     var onRemoveSource: (PlainNewsSource) -> Void
     var onRun: () -> Void
+    var onCancelRun: () -> Void
     var onClearDigest: () -> Void
     var onOpenItem: (PlainNewsDigestItem) -> Void
     var onSaveItemForLater: (PlainNewsDigestItem) -> Void
@@ -287,13 +288,21 @@ struct PlainNewsView: View {
                         .help("Clear Digest")
                     }
 
-                    Button {
-                        onRun()
-                    } label: {
-                        Label(isRunning ? "Running" : "Run", systemImage: isRunning ? "hourglass" : "sparkles")
+                    if isRunning {
+                        Button {
+                            onCancelRun()
+                        } label: {
+                            Label("Cancel", systemImage: "xmark.circle")
+                        }
+                        .buttonStyle(.bordered)
+                    } else {
+                        Button {
+                            onRun()
+                        } label: {
+                            Label("Run", systemImage: "sparkles")
+                        }
+                        .buttonStyle(.borderedProminent)
                     }
-                    .buttonStyle(.borderedProminent)
-                    .disabled(isRunning)
                 }
 
                 if hasRunSurface {
@@ -320,10 +329,15 @@ struct PlainNewsView: View {
                                 isItemSavedForLater(item)
                             }
                         }
+
+                        PlainNewsDonePanel(onClear: onClearDigest)
                     }
                 } else if digest != nil {
-                    PlainNewsEmptyPanel(title: "Nothing surfaced", systemName: "checkmark.circle")
-                        .frame(maxWidth: .infinity, minHeight: 180, alignment: .leading)
+                    VStack(spacing: 10) {
+                        PlainNewsEmptyPanel(title: "Nothing surfaced", systemName: "checkmark.circle")
+                            .frame(maxWidth: .infinity, minHeight: 180, alignment: .leading)
+                        PlainNewsDonePanel(onClear: onClearDigest)
+                    }
                 }
             }
             .frame(maxWidth: 860, alignment: .leading)
@@ -375,8 +389,11 @@ struct PlainNewsView: View {
             Label("Results", systemImage: "number.square")
                 .font(.headline)
 
-            Toggle("Limit results", isOn: $limitsResults)
-                .font(.subheadline.weight(.semibold))
+            HStack {
+                Toggle("Limit results", isOn: $limitsResults)
+                    .font(.subheadline.weight(.semibold))
+                Spacer(minLength: 0)
+            }
 
             if limitsResults {
                 HStack {
@@ -390,6 +407,7 @@ struct PlainNewsView: View {
                 }
             }
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
         .padding(14)
         .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 8))
         .overlay {
@@ -929,6 +947,44 @@ struct PlainNewsProgressView: View {
             return 0
         }
         return Double(progress.completed) / Double(progress.total)
+    }
+}
+
+struct PlainNewsDonePanel: View {
+    var onClear: () -> Void
+
+    var body: some View {
+        HStack(spacing: 12) {
+            Image(systemName: "checkmark.circle")
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(.secondary)
+                .frame(width: 28, height: 28)
+                .background(Color(nsColor: .controlBackgroundColor), in: RoundedRectangle(cornerRadius: 7))
+
+            VStack(alignment: .leading, spacing: 3) {
+                Text("You're all done with the news.")
+                    .font(.subheadline.weight(.semibold))
+                Text("Clear this digest when you want a clean view.")
+                    .font(.caption.weight(.medium))
+                    .foregroundStyle(.secondary)
+            }
+
+            Spacer()
+
+            Button {
+                onClear()
+            } label: {
+                Label("Clear", systemImage: "xmark")
+            }
+            .buttonStyle(.bordered)
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color(nsColor: .controlBackgroundColor).opacity(0.55), in: RoundedRectangle(cornerRadius: 8))
+        .overlay {
+            RoundedRectangle(cornerRadius: 8)
+                .stroke(Color(nsColor: .separatorColor).opacity(0.38), lineWidth: 1)
+        }
     }
 }
 

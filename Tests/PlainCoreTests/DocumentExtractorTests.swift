@@ -94,6 +94,34 @@ final class DocumentExtractorTests: XCTestCase {
         ])
     }
 
+    func testExtractorLinksPlainEmailAddresses() throws {
+        let baseURL = URL(string: "https://example.com/read")!
+        let html = """
+        <!doctype html>
+        <article>
+          <p>Email hello@example.com for details, or use <a href="mailto:support@example.com">support</a>.</p>
+        </article>
+        """
+        let sanitized = try Sanitizer().sanitize(html: html, baseURL: baseURL)
+
+        let document = try DocumentExtractor().extract(
+            sanitizedHTML: sanitized,
+            sourceURL: baseURL,
+            finalURL: baseURL,
+            fetchedAt: Date(timeIntervalSince1970: 0)
+        )
+
+        let paragraph = try XCTUnwrap(document.elements.compactMap { element -> [InlineElement]? in
+            guard case .paragraph(let inline) = element else {
+                return nil
+            }
+            return inline
+        }.first)
+
+        XCTAssertTrue(paragraph.contains(.link(text: "hello@example.com", url: URL(string: "mailto:hello@example.com")!)))
+        XCTAssertTrue(paragraph.contains(.link(text: "support", url: URL(string: "mailto:support@example.com")!)))
+    }
+
     func testExtractorFindsLazyAndSrcsetImages() throws {
         let baseURL = URL(string: "https://example.com/read")!
         let html = """

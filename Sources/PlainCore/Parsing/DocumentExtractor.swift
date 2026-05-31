@@ -310,6 +310,7 @@ public struct DocumentExtractor: Sendable {
             .repairingSpacing(matching: renderedText)
             .collapsingDuplicateBoundaryWhitespace()
             .removingSpacesBeforePunctuation()
+            .linkifyingEmailAddresses()
     }
 
     private func extractInline(from node: Node, baseURL: URL) throws -> [InlineElement] {
@@ -522,7 +523,8 @@ public struct DocumentExtractor: Sendable {
         }
 
         let url = URL(string: trimmed, relativeTo: baseURL)?.absoluteURL
-        guard let scheme = url?.scheme?.lowercased(), scheme == "http" || scheme == "https" else {
+        guard let scheme = url?.scheme?.lowercased(),
+              scheme == "http" || scheme == "https" || scheme == "mailto" else {
             return nil
         }
         return url
@@ -1281,9 +1283,56 @@ private extension Array where Element == InlineElement {
 
         return result
     }
+
+    func linkifyingEmailAddresses() -> [InlineElement] {
+        flatMap { element -> [InlineElement] in
+            guard case .text(let text) = element else {
+                return [element]
+            }
+            return InlineElement.emailLinkedText(from: text)
+        }
+    }
 }
 
 private extension InlineElement {
+    static func emailLinkedText(from text: String) -> [InlineElement] {
+        guard let regex = try? NSRegularExpression(
+            pattern: #"[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}"#,
+            options: [.caseInsensitive]
+        ) else {
+            return [.text(text)]
+        }
+
+        let nsText = text as NSString
+        let matches = regex.matches(in: text, range: NSRange(location: 0, length: nsText.length))
+        guard !matches.isEmpty else {
+            return [.text(text)]
+        }
+
+        var output: [InlineElement] = []
+        var cursor = 0
+
+        for match in matches {
+            if match.range.location > cursor {
+                output.append(.text(nsText.substring(with: NSRange(location: cursor, length: match.range.location - cursor))))
+            }
+
+            let email = nsText.substring(with: match.range)
+            if let url = URL(string: "mailto:\(email)") {
+                output.append(.link(text: email, url: url))
+            } else {
+                output.append(.text(email))
+            }
+            cursor = match.range.location + match.range.length
+        }
+
+        if cursor < nsText.length {
+            output.append(.text(nsText.substring(from: cursor)))
+        }
+
+        return output
+    }
+
     var visibleText: String {
         switch self {
         case .text(let text), .strong(let text), .emphasis(let text), .code(let text):

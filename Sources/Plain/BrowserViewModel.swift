@@ -61,6 +61,7 @@ final class BrowserViewModel: ObservableObject {
     private let updateChecker = ReleaseUpdateChecker()
     private var newsReturnNavigation = PlainNewsReturnNavigation()
     private var laterReadingSequence = PlainLaterReadingSequence()
+    private var newsTask: Task<Void, Never>?
     private var didHandleStartupArguments = false
     private var didCheckForUpdates = false
 
@@ -196,11 +197,20 @@ final class BrowserViewModel: ObservableObject {
     }
 
     func openLink(_ url: URL) {
+        if shouldOpenOutsidePlain(url) {
+            openLinkInDefaultBrowser(url)
+            return
+        }
+
         address = url.absoluteString
         clearLaterNavigation()
         Task {
             await load(url.absoluteString)
         }
+    }
+
+    func openLinkInDefaultBrowser(_ url: URL) {
+        NSWorkspace.shared.open(url)
     }
 
     func openHandoffURL(_ url: URL) {
@@ -440,6 +450,9 @@ final class BrowserViewModel: ObservableObject {
     }
 
     func clearNewsDigest() {
+        if isNewsRunning {
+            cancelPlainNews()
+        }
         newsDigest = nil
         newsProgress = nil
         newsErrorMessage = nil
@@ -468,7 +481,8 @@ final class BrowserViewModel: ObservableObject {
         newsProgress = PlainNewsProgress(stage: .collecting, message: "Collecting sources", completed: 0, total: enabledSources.count)
         state = .news
 
-        Task {
+        newsTask?.cancel()
+        newsTask = Task {
             let digest = await pipeline.run(
                 sources: enabledSources,
                 window: window,
@@ -479,11 +493,32 @@ final class BrowserViewModel: ObservableObject {
                 }
             }
 
+            guard !Task.isCancelled else {
+                self.isNewsRunning = false
+                self.newsProgress = nil
+                self.newsTask = nil
+                self.setStatus("Plain News cancelled")
+                return
+            }
+
             self.newsDigest = digest
             self.isNewsRunning = false
             self.newsProgress = nil
+            self.newsTask = nil
             self.setStatus("Plain News ready")
         }
+    }
+
+    func cancelPlainNews() {
+        guard isNewsRunning else {
+            return
+        }
+
+        newsTask?.cancel()
+        newsTask = nil
+        isNewsRunning = false
+        newsProgress = nil
+        setStatus("Plain News cancelled")
     }
 
     func openNewsItem(_ item: PlainNewsDigestItem) {
@@ -525,6 +560,36 @@ final class BrowserViewModel: ObservableObject {
             setStatus("Image cache cleared")
         } catch {
             setStatus("Could not clear image cache")
+        }
+    }
+
+    func saveImage(_ image: ImageRef) {
+        guard let localPath = image.localPath else {
+            setStatus("Image is not available locally")
+            return
+        }
+
+        let panel = NSSavePanel()
+        panel.title = "Save Image"
+        panel.nameFieldStringValue = imageDownloadName(for: image)
+        let extensionHint = nonEmpty(localPath.pathExtension) ?? image.sourceURL.pathExtension
+        if let type = UTType(filenameExtension: extensionHint) {
+            panel.allowedContentTypes = [type]
+        }
+
+        guard panel.runModal() == .OK,
+              let destination = panel.url else {
+            return
+        }
+
+        do {
+            if FileManager.default.fileExists(atPath: destination.path) {
+                try FileManager.default.removeItem(at: destination)
+            }
+            try FileManager.default.copyItem(at: localPath, to: destination)
+            setStatus("Image saved")
+        } catch {
+            setStatus("Could not save image")
         }
     }
 
@@ -589,6 +654,25 @@ final class BrowserViewModel: ObservableObject {
         let pasteboard = NSPasteboard.general
         pasteboard.clearContents()
         pasteboard.setString(text, forType: .string)
+    }
+
+    private func shouldOpenOutsidePlain(_ url: URL) -> Bool {
+        guard let scheme = url.scheme?.lowercased() else {
+            return false
+        }
+        return scheme != "http" && scheme != "https"
+    }
+
+    private func imageDownloadName(for image: ImageRef) -> String {
+        let sourceName = nonEmpty(image.sourceURL.lastPathComponent)
+        let localName = image.localPath.flatMap { nonEmpty($0.lastPathComponent) }
+        let fallback = image.mimeType?.lowercased().contains("png") == true ? "image.png" : "image.jpg"
+        return sourceName ?? localName ?? fallback
+    }
+
+    private func nonEmpty(_ value: String) -> String? {
+        let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? nil : trimmed
     }
 
     private var canReturnToNewsFromCurrentSurface: Bool {

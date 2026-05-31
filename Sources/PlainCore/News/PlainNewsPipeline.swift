@@ -46,6 +46,10 @@ public struct PlainNewsPipeline: Sendable {
         var completedSources = 0
 
         for source in activeSources {
+            guard !Task.isCancelled else {
+                break
+            }
+
             let sourceArticles: [PlainNewsArticle]
             switch source.kind {
             case .rss:
@@ -100,6 +104,10 @@ public struct PlainNewsPipeline: Sendable {
         var completedAssessments = 0
 
         for article in shortlisted {
+            guard !Task.isCancelled else {
+                break
+            }
+
             let assessment = await intelligence.assess(article: article, interestProfile: interestProfile)
             usedModels.insert(assessment.model)
             completedAssessments += 1

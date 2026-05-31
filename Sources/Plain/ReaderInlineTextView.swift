@@ -6,6 +6,7 @@ struct ParagraphView: View {
     var inline: [InlineElement]
     var readerSettings: ReaderDisplaySettings
     var onOpenLink: (URL) -> Void
+    var onOpenExternalLink: (URL) -> Void
 
     @State private var measuredHeight: CGFloat = 28
 
@@ -16,7 +17,8 @@ struct ParagraphView: View {
                 width: proxy.size.width,
                 readerSettings: readerSettings,
                 measuredHeight: $measuredHeight,
-                onOpenLink: onOpenLink
+                onOpenLink: onOpenLink,
+                onOpenExternalLink: onOpenExternalLink
             )
         }
         .frame(height: measuredHeight)
@@ -29,6 +31,7 @@ private struct ReaderInlineTextView: NSViewRepresentable {
     var readerSettings: ReaderDisplaySettings
     @Binding var measuredHeight: CGFloat
     var onOpenLink: (URL) -> Void
+    var onOpenExternalLink: (URL) -> Void
 
     func makeNSView(context: Context) -> LinkAwareTextView {
         let textView = LinkAwareTextView()
@@ -54,6 +57,7 @@ private struct ReaderInlineTextView: NSViewRepresentable {
 
     func updateNSView(_ textView: LinkAwareTextView, context: Context) {
         textView.onOpenLink = onOpenLink
+        textView.onOpenExternalLink = onOpenExternalLink
 
         let signature = "\(inline.signature)|\(readerSettings.signature)"
         if textView.renderedSignature != signature {
@@ -150,6 +154,7 @@ private struct ReaderInlineTextView: NSViewRepresentable {
 
 private final class LinkAwareTextView: NSTextView {
     var onOpenLink: ((URL) -> Void)?
+    var onOpenExternalLink: ((URL) -> Void)?
     var renderedSignature = ""
     private var linkTrackingArea: NSTrackingArea?
 
@@ -186,7 +191,11 @@ private final class LinkAwareTextView: NSTextView {
     override func mouseDown(with event: NSEvent) {
         let point = convert(event.locationInWindow, from: nil)
         if let url = linkURL(at: point) {
-            onOpenLink?(url)
+            if event.modifierFlags.intersection(.deviceIndependentFlagsMask).contains(.command) {
+                onOpenExternalLink?(url)
+            } else {
+                onOpenLink?(url)
+            }
             return
         }
 
