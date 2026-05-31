@@ -28,6 +28,28 @@ final class PlainNewsTests: XCTestCase {
         XCTAssertNotNil(items[0].publishedAt)
     }
 
+    func testFeedParserDecodesHTMLEntitiesInTitlesAndSummaries() throws {
+        let xml = """
+        <?xml version="1.0" encoding="UTF-8"?>
+        <rss version="2.0">
+          <channel>
+            <item>
+              <title>What are we all playing this weekend? Don&amp;rsquo;t miss it</title>
+              <link>https://example.com/weekend</link>
+              <description><![CDATA[<p>This weekend, I&rsquo;m going to watch Soccer Aid&nbsp;.</p>]]></description>
+            </item>
+          </channel>
+        </rss>
+        """
+        let parser = PlainNewsFeedParser()
+
+        let items = try parser.parse(Data(xml.utf8), sourceURL: URL(string: "https://example.com/feed.xml")!)
+
+        XCTAssertEqual(items.count, 1)
+        XCTAssertEqual(items[0].title, "What are we all playing this weekend? Don’t miss it")
+        XCTAssertEqual(items[0].summary, "This weekend, I’m going to watch Soccer Aid .")
+    }
+
     func testFeedParserReadsAtomLinks() throws {
         let xml = """
         <feed xmlns="http://www.w3.org/2005/Atom">
@@ -189,6 +211,27 @@ final class PlainNewsTests: XCTestCase {
 
         XCTAssertEqual(selected.count, 7)
         XCTAssertTrue(selected.contains { now.timeIntervalSince($0) >= 5 * 24 * 60 * 60 })
+    }
+
+    func testSourceDiversifierKeepsQuieterSources() {
+        let loudSource = UUID()
+        let quietSource = UUID()
+        let olderQuietSource = UUID()
+        let rankedSources = [
+            loudSource,
+            loudSource,
+            loudSource,
+            quietSource,
+            olderQuietSource,
+            loudSource
+        ]
+
+        let selected = PlainNewsSourceDiversifier.diversified(
+            rankedSources,
+            maxCount: 3
+        ) { $0 }
+
+        XCTAssertEqual(selected, [loudSource, quietSource, olderQuietSource])
     }
 
     func testPresetSourcesAvoidNicheVendorFeeds() {

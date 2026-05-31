@@ -18,7 +18,7 @@
   <a href="https://github.com/mikaelvesavuori/plain-browser/releases/latest">Download Plain</a>
 </p>
 
-Plain is a native macOS, document-first browser for the readable web. The current release is **Plain 1.1.1**.
+Plain is a native macOS, document-first browser for the readable web. The current release is **Plain 1.1.2**.
 
 It opens web pages, follows links, searches the web, keeps history, and supports back/forward navigation. The difference is what happens after a page is fetched: Plain removes the active web runtime, extracts the useful text and images, and renders the result as a calm SwiftUI document.
 
@@ -36,7 +36,7 @@ Plain is small by design. The Apple silicon package is a 3.1 MB DMG, a 2.7 MB zi
 - It is intentionally not a full web-app browser for banking, shopping carts, rich editors, dashboards, video apps, or complex login flows.
 - Address-bar searches use Mojeek instead of Google or another big-tech default.
 - Plain has no telemetry, no account, no sync, no remote AI calls for page reading or Plain News, no automatic crash reporting, and no page JavaScript execution.
-- Plain 1.1.1 is ad-hoc signed and not notarized, so macOS may show a first-open warning on downloaded builds.
+- Plain 1.1.2 is ad-hoc signed and not notarized, so macOS may show a first-open warning on downloaded builds.
 
 ## Download Plain
 
@@ -164,7 +164,7 @@ Useful reports include the page URL, what looked wrong, what you expected, wheth
 
 ## Project Status
 
-Plain is currently **Plain 1.1.1**. It is useful for readable pages today, with one deliberate boundary: pages that require a full web-app browser should open in the default browser.
+Plain is currently **Plain 1.1.2**. It is useful for readable pages today, with one deliberate boundary: pages that require a full web-app browser should open in the default browser.
 
 The current release includes the native app, semantic extraction, local non-SVG document image fetching and cache, recent pages, Later list with Markdown export and adjacent-item navigation, Plain News, text/Markdown export, clear-history/cache controls, URL handoff, sandboxed packaging, privacy-oriented fetch policy, and benchmark claim tooling.
 
@@ -300,8 +300,8 @@ make package-claims
 On GitHub, pushing a version tag builds and publishes the downloadable release assets:
 
 ```sh
-git tag v1.1.1
-git push origin v1.1.1
+git tag v1.1.2
+git push origin v1.1.2
 ```
 
 The release workflow derives the app version from the tag, builds the docs, runs the claim-aware package build, and attaches the `.dmg`, `.zip`, and checksum file to a GitHub Release.

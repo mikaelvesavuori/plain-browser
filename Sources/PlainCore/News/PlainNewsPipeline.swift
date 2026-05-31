@@ -79,13 +79,19 @@ public struct PlainNewsPipeline: Sendable {
 
                 return (left.publishedAt ?? left.observedAt) > (right.publishedAt ?? right.observedAt)
             }
-        let shortlisted = PlainNewsTemporalDiversifier.diversified(
+        let timeBalancedArticlePool = PlainNewsTemporalDiversifier.diversified(
             rankedArticles,
-            maxCount: maxAssessedArticles,
+            maxCount: min(rankedArticles.count, maxAssessedArticles * 2),
             window: window,
             now: now
         ) { article in
             article.publishedAt ?? article.observedAt
+        }
+        let shortlisted = PlainNewsSourceDiversifier.diversified(
+            timeBalancedArticlePool,
+            maxCount: maxAssessedArticles
+        ) { article in
+            article.sourceID
         }
 
         await progress?(PlainNewsProgress(stage: .assessing, message: "Reading locally", completed: 0, total: shortlisted.count))
@@ -119,13 +125,19 @@ public struct PlainNewsPipeline: Sendable {
 
                 return (left.article.publishedAt ?? left.article.observedAt) > (right.article.publishedAt ?? right.article.observedAt)
             }
-        let items = PlainNewsTemporalDiversifier.diversified(
+        let timeBalancedItemPool = PlainNewsTemporalDiversifier.diversified(
             rankedItems,
-            maxCount: maxDigestItems,
+            maxCount: min(rankedItems.count, maxDigestItems * 2),
             window: window,
             now: now
         ) { item in
             item.article.publishedAt ?? item.article.observedAt
+        }
+        let items = PlainNewsSourceDiversifier.diversified(
+            timeBalancedItemPool,
+            maxCount: maxDigestItems
+        ) { item in
+            item.article.sourceID
         }
         .sorted { left, right in
             (left.article.publishedAt ?? left.article.observedAt) > (right.article.publishedAt ?? right.article.observedAt)
@@ -430,6 +442,45 @@ enum PlainNewsTemporalDiversifier {
         let age = max(0, now.timeIntervalSince(date))
         let bucketDuration = max(1, window.duration(relativeTo: now) / Double(bucketCount))
         return min(bucketCount - 1, Int(age / bucketDuration))
+    }
+}
+
+enum PlainNewsSourceDiversifier {
+    static func diversified<Value, SourceID: Hashable>(
+        _ rankedValues: [Value],
+        maxCount: Int,
+        sourceID: (Value) -> SourceID
+    ) -> [Value] {
+        guard maxCount > 0 else {
+            return []
+        }
+
+        guard rankedValues.count > maxCount else {
+            return rankedValues
+        }
+
+        let ranked = Array(rankedValues.enumerated())
+        var selectedOffsets = Set<Int>()
+        var selected: [(offset: Int, element: Value)] = []
+        var coveredSources = Set<SourceID>()
+
+        for value in ranked where selected.count < maxCount {
+            let source = sourceID(value.element)
+            guard !coveredSources.contains(source) else {
+                continue
+            }
+
+            selected.append(value)
+            selectedOffsets.insert(value.offset)
+            coveredSources.insert(source)
+        }
+
+        for value in ranked where selected.count < maxCount && !selectedOffsets.contains(value.offset) {
+            selected.append(value)
+            selectedOffsets.insert(value.offset)
+        }
+
+        return selected.map(\.element)
     }
 }
 

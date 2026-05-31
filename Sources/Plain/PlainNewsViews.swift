@@ -33,6 +33,8 @@ struct PlainNewsView: View {
     var sources: [PlainNewsSource]
     @Binding var interestProfile: String
     @Binding var window: PlainNewsWindow
+    @Binding var limitsResults: Bool
+    @Binding var resultLimit: Int
     var digest: PlainNewsDigest?
     var progress: PlainNewsProgress?
     var errorMessage: String?
@@ -298,6 +300,7 @@ struct PlainNewsView: View {
                     runSummaryPanel
                 } else {
                     timeWindowPanel
+                    resultLimitPanel
                     interestsPanel
                     aiStatusPanel
                 }
@@ -356,6 +359,34 @@ struct PlainNewsView: View {
                     }
 
                     Slider(value: rollingDaysSliderBinding, in: 1...30, step: 1)
+                }
+            }
+        }
+        .padding(14)
+        .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 8))
+        .overlay {
+            RoundedRectangle(cornerRadius: 8)
+                .stroke(Color(nsColor: .separatorColor).opacity(0.38), lineWidth: 1)
+        }
+    }
+
+    private var resultLimitPanel: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Label("Results", systemImage: "number.square")
+                .font(.headline)
+
+            Toggle("Limit results", isOn: $limitsResults)
+                .font(.subheadline.weight(.semibold))
+
+            if limitsResults {
+                HStack {
+                    Text("Maximum")
+                        .font(.subheadline.weight(.semibold))
+                    Spacer()
+                    Stepper(value: $resultLimit, in: 6...60, step: 6) {
+                        Text("\(resultLimit)")
+                            .font(.subheadline.monospacedDigit().weight(.semibold))
+                    }
                 }
             }
         }
@@ -432,6 +463,12 @@ struct PlainNewsView: View {
                 Text(runSummarySubtitle)
                     .font(.caption.weight(.medium))
                     .foregroundStyle(.secondary)
+                if digest != nil {
+                    Text(selectionPolicySummary)
+                        .font(.caption.weight(.medium))
+                        .foregroundStyle(.tertiary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
             }
 
             Spacer()
@@ -446,7 +483,7 @@ struct PlainNewsView: View {
 
     private var digestSubtitle: String {
         if let digest {
-            return "\(digest.items.count) picked from \(digest.articleCount) article\(digest.articleCount == 1 ? "" : "s") · \(digest.modelName)"
+            return "\(digest.items.count) shown from \(digest.articleCount) article\(digest.articleCount == 1 ? "" : "s") · \(digest.modelName)"
         }
 
         if isRunning {
@@ -469,7 +506,8 @@ struct PlainNewsView: View {
 
     private var runSummarySubtitle: String {
         if let digest {
-            return "\(digest.articleCount) article\(digest.articleCount == 1 ? "" : "s") scanned · \(digest.modelName)"
+            let limitLabel = limitsResults ? "\(resultLimit) result limit" : "No result limit"
+            return "\(digest.items.count) of \(digest.articleCount) shown · \(limitLabel) · \(digest.modelName)"
         }
 
         if isRunning {
@@ -477,6 +515,14 @@ struct PlainNewsView: View {
         }
 
         return "Local reading pass"
+    }
+
+    private var selectionPolicySummary: String {
+        if interestProfile.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            return "With no interests set, Plain balances recency, source variety, and available excerpts."
+        }
+
+        return "Plain prioritizes matches to your interests, then balances recency and source variety."
     }
 
     private func newsWindowSummary(for window: PlainNewsWindow) -> String {

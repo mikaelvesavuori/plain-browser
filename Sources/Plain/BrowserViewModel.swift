@@ -29,6 +29,16 @@ final class BrowserViewModel: ObservableObject {
             newsStore.saveWindow(newsWindow)
         }
     }
+    @Published var newsLimitsResults: Bool = true {
+        didSet {
+            newsStore.saveLimitsResults(newsLimitsResults)
+        }
+    }
+    @Published var newsResultLimit: Int = 12 {
+        didSet {
+            newsStore.saveResultLimit(newsResultLimit)
+        }
+    }
     @Published private(set) var newsDigest: PlainNewsDigest?
     @Published private(set) var newsProgress: PlainNewsProgress?
     @Published private(set) var newsErrorMessage: String?
@@ -60,6 +70,8 @@ final class BrowserViewModel: ObservableObject {
         newsSources = newsStore.loadSources()
         newsInterestProfile = newsStore.loadInterests()
         newsWindow = newsStore.loadWindow()
+        newsLimitsResults = newsStore.loadLimitsResults()
+        newsResultLimit = newsStore.loadResultLimit()
         try? imageCache.prune()
     }
 
@@ -444,9 +456,12 @@ final class BrowserViewModel: ObservableObject {
             return
         }
 
-        let pipeline = newsPipeline
+        var pipeline = newsPipeline
         let window = newsWindow
         let interests = newsInterestProfile
+        let resultLimit = newsLimitsResults ? newsResultLimit : Int.max / 4
+        pipeline.maxDigestItems = resultLimit
+        pipeline.maxAssessedArticles = newsLimitsResults ? max(36, resultLimit * 3) : Int.max / 4
         isNewsRunning = true
         newsDigest = nil
         newsErrorMessage = nil

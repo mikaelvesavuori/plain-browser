@@ -612,6 +612,8 @@ struct BrowserView: View {
                 sources: viewModel.newsSources,
                 interestProfile: $viewModel.newsInterestProfile,
                 window: $viewModel.newsWindow,
+                limitsResults: $viewModel.newsLimitsResults,
+                resultLimit: $viewModel.newsResultLimit,
                 digest: viewModel.newsDigest,
                 progress: viewModel.newsProgress,
                 errorMessage: viewModel.newsErrorMessage,

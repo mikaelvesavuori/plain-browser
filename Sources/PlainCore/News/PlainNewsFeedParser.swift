@@ -1,4 +1,5 @@
 import Foundation
+import SwiftSoup
 #if canImport(FoundationXML)
 import FoundationXML
 #endif
@@ -154,8 +155,8 @@ private final class FeedParserDelegate: NSObject, XMLParserDelegate {
             return
         }
 
-        let title = normalizedText(currentItem.title)
-        let summary = normalizedText(stripHTML(currentItem.summary))
+        let title = htmlDecodedText(currentItem.title)
+        let summary = htmlDecodedText(currentItem.summary)
         let url = URL(string: currentItem.link, relativeTo: sourceURL)?.absoluteURL
         guard !title.isEmpty || url != nil else {
             return
@@ -187,6 +188,21 @@ private final class FeedParserDelegate: NSObject, XMLParserDelegate {
         existing.isEmpty ? next : "\(existing) \(next)"
     }
 
+    private func htmlDecodedText(_ value: String) -> String {
+        let normalizedValue = normalizedText(value)
+        guard !normalizedValue.isEmpty else {
+            return ""
+        }
+
+        if let body = try? SwiftSoup.parseBodyFragment(normalizedValue).body(),
+           let text = try? body.text(),
+           !text.isEmpty {
+            return normalizedText(text)
+        }
+
+        return normalizedText(stripHTML(normalizedValue))
+    }
+
     private func stripHTML(_ value: String) -> String {
         value
             .replacingOccurrences(of: "<[^>]+>", with: " ", options: .regularExpression)
@@ -194,6 +210,11 @@ private final class FeedParserDelegate: NSObject, XMLParserDelegate {
             .replacingOccurrences(of: "&amp;", with: "&")
             .replacingOccurrences(of: "&quot;", with: "\"")
             .replacingOccurrences(of: "&#39;", with: "'")
+            .replacingOccurrences(of: "&apos;", with: "'")
+            .replacingOccurrences(of: "&rsquo;", with: "'")
+            .replacingOccurrences(of: "&lsquo;", with: "'")
+            .replacingOccurrences(of: "&rdquo;", with: "\"")
+            .replacingOccurrences(of: "&ldquo;", with: "\"")
             .replacingOccurrences(of: "&lt;", with: "<")
             .replacingOccurrences(of: "&gt;", with: ">")
     }

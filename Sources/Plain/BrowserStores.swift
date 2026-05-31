@@ -85,6 +85,8 @@ struct PlainNewsStore {
     private let sourcesKey = "Plain.News.Sources"
     private let interestsKey = "Plain.News.Interests"
     private let windowKey = "Plain.News.Window"
+    private let limitsResultsKey = "Plain.News.LimitsResults"
+    private let resultLimitKey = "Plain.News.ResultLimit"
 
     func loadSources() -> [PlainNewsSource] {
         guard let data = UserDefaults.standard.data(forKey: sourcesKey) else {
@@ -130,5 +132,32 @@ struct PlainNewsStore {
 
     func saveWindow(_ window: PlainNewsWindow) {
         UserDefaults.standard.set(window.storageValue, forKey: windowKey)
+    }
+
+    func loadLimitsResults() -> Bool {
+        guard UserDefaults.standard.object(forKey: limitsResultsKey) != nil else {
+            return true
+        }
+        return UserDefaults.standard.bool(forKey: limitsResultsKey)
+    }
+
+    func saveLimitsResults(_ value: Bool) {
+        UserDefaults.standard.set(value, forKey: limitsResultsKey)
+    }
+
+    func loadResultLimit() -> Int {
+        let value = UserDefaults.standard.integer(forKey: resultLimitKey)
+        guard value > 0 else {
+            return 12
+        }
+        return clampedResultLimit(value)
+    }
+
+    func saveResultLimit(_ value: Int) {
+        UserDefaults.standard.set(clampedResultLimit(value), forKey: resultLimitKey)
+    }
+
+    private func clampedResultLimit(_ value: Int) -> Int {
+        min(60, max(6, value))
     }
 }

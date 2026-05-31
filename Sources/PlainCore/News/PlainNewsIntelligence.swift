@@ -99,7 +99,7 @@ public struct HeuristicPlainNewsIntelligence: PlainNewsIntelligence {
         let reason: String
 
         if terms.isEmpty {
-            reason = "Recent item from \(article.sourceName)."
+            reason = "No interests set; selected for recency, source balance, and available excerpt."
         } else if matchedTerms.isEmpty {
             reason = "No clear match for the current interests."
         } else {
