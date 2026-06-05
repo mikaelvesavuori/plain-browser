@@ -5,6 +5,7 @@ import SwiftUI
 struct StartView: View {
     var recentPages: [HistoryItem]
     var laterItems: [LaterItem]
+    var quoteItems: [QuoteItem]
     var showsWelcome: Bool
     var topChromeInset: CGFloat
     var onOpen: (HistoryItem) -> Void
@@ -13,6 +14,7 @@ struct StartView: View {
     var onExportLater: () -> Void
     var onClearLater: () -> Void
     var onShowNews: () -> Void
+    var onShowQuotes: () -> Void
     var onClear: () -> Void
     var onDismissWelcome: () -> Void
 
@@ -27,11 +29,16 @@ struct StartView: View {
 
                 PlainNewsStartRow(onOpen: onShowNews)
 
+                QuoteLibraryStartRow(
+                    quoteItems: quoteItems,
+                    onOpen: onShowQuotes
+                )
+
                 if !laterItems.isEmpty {
                     laterSection
                 }
 
-                if recentPages.isEmpty && laterItems.isEmpty {
+                if recentPages.isEmpty && laterItems.isEmpty && quoteItems.isEmpty {
                     EmptyRecentView()
                 } else if !recentPages.isEmpty {
                     recentSection
@@ -112,6 +119,15 @@ struct StartView: View {
     }
 }
 
+struct QuoteSourceGroup: Identifiable {
+    var id: String { url.absoluteString }
+    var url: URL
+    var title: String
+    var siteName: String?
+    var latestSavedAt: Date
+    var items: [QuoteItem]
+}
+
 struct PlainNewsStartRow: View {
     var onOpen: () -> Void
 
@@ -154,6 +170,168 @@ struct PlainNewsStartRow: View {
                 .stroke(Color(nsColor: .separatorColor).opacity(0.38), lineWidth: 1)
         }
         .pointingHandCursor()
+    }
+}
+
+struct QuoteLibraryStartRow: View {
+    var quoteItems: [QuoteItem]
+    var onOpen: () -> Void
+
+    private var subtitle: String {
+        guard !quoteItems.isEmpty else {
+            return "0 saved"
+        }
+        return "\(quoteItems.count) saved"
+    }
+
+    var body: some View {
+        Button {
+            onOpen()
+        } label: {
+            HStack(spacing: 12) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 7)
+                        .fill(Color.accentColor.opacity(0.1))
+                    Image(systemName: "quote.bubble")
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundStyle(.tint)
+                }
+                .frame(width: 36, height: 36)
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Quotes")
+                        .foregroundStyle(.primary)
+                        .font(.headline)
+                    Text(subtitle)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+
+                Spacer()
+
+                Image(systemName: "arrow.right")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.tertiary)
+            }
+            .padding(12)
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .buttonStyle(.plain)
+        .background(Color(nsColor: .controlBackgroundColor).opacity(0.72), in: RoundedRectangle(cornerRadius: 8))
+        .overlay {
+            RoundedRectangle(cornerRadius: 8)
+                .stroke(Color(nsColor: .separatorColor).opacity(0.38), lineWidth: 1)
+        }
+        .pointingHandCursor()
+    }
+}
+
+struct QuotesLibraryView: View {
+    var quoteItems: [QuoteItem]
+    var topChromeInset: CGFloat
+    var onOpenQuoteSource: (QuoteItem) -> Void
+    var onCopyQuote: (QuoteItem) -> Void
+    var onRemoveQuote: (QuoteItem) -> Void
+    var onExportQuotes: () -> Void
+    var onClearQuotes: () -> Void
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 22) {
+                HStack(alignment: .firstTextBaseline) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Quotes")
+                            .font(.system(size: 42, weight: .semibold, design: .serif))
+                        Text(librarySubtitle)
+                            .font(.callout.weight(.medium))
+                            .foregroundStyle(.secondary)
+                    }
+
+                    Spacer()
+
+                    Button("Export") {
+                        onExportQuotes()
+                    }
+                    .buttonStyle(.link)
+                    .disabled(quoteItems.isEmpty)
+
+                    Button("Clear") {
+                        onClearQuotes()
+                    }
+                    .buttonStyle(.link)
+                    .disabled(quoteItems.isEmpty)
+                }
+
+                if quoteItems.isEmpty {
+                    EmptyQuotesLibraryView()
+                } else {
+                    VStack(spacing: 16) {
+                        ForEach(sortedQuoteItems) { item in
+                            QuoteReadingCard(item: item) {
+                                onOpenQuoteSource(item)
+                            } onCopy: {
+                                onCopyQuote(item)
+                            } onRemove: {
+                                onRemoveQuote(item)
+                            }
+                        }
+                    }
+                }
+            }
+            .frame(maxWidth: 840, alignment: .leading)
+            .padding(.horizontal, 42)
+            .padding(.top, 56 + topChromeInset)
+            .padding(.bottom, 56)
+            .frame(maxWidth: .infinity, alignment: .center)
+        }
+        .background(StartBackground())
+    }
+
+    private var librarySubtitle: String {
+        guard !quoteItems.isEmpty else {
+            return "Saved passages will appear here."
+        }
+        return "\(quoteItems.count) saved from \(sourceCount) source\(sourceCount == 1 ? "" : "s")"
+    }
+
+    private var sortedQuoteItems: [QuoteItem] {
+        quoteItems.sorted { $0.savedAt > $1.savedAt }
+    }
+
+    private var sourceCount: Int {
+        Set(quoteItems.map(\.sourceURL)).count
+    }
+}
+
+struct EmptyQuotesLibraryView: View {
+    var body: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(Color.accentColor.opacity(0.1))
+                Image(systemName: "quote.bubble")
+                    .font(.system(size: 22, weight: .semibold))
+                    .foregroundStyle(.tint)
+            }
+            .frame(width: 48, height: 48)
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text("No quotes yet")
+                    .font(.title3.weight(.semibold))
+                    .foregroundStyle(.primary)
+                Text("Saved passages from readable pages will collect here by URL and time.")
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .padding(24)
+        .frame(maxWidth: .infinity, minHeight: 176, alignment: .leading)
+        .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 8))
+        .overlay {
+            RoundedRectangle(cornerRadius: 8)
+                .stroke(Color(nsColor: .separatorColor).opacity(0.35), lineWidth: 1)
+        }
     }
 }
 
@@ -254,6 +432,7 @@ struct FirstRunPlainNote: View {
             }
             .buttonStyle(.plain)
             .help("Dismiss")
+            .hoverIconButton(size: 26, cornerRadius: 7)
             .background(Color(nsColor: .controlBackgroundColor), in: RoundedRectangle(cornerRadius: 7))
         }
         .padding(14)
@@ -418,6 +597,7 @@ struct LaterPageRow: View {
             }
             .buttonStyle(.plain)
             .help("Remove from Later")
+            .hoverIconButton(size: 28, cornerRadius: 7, isDestructive: true)
             .padding(.trailing, 8)
         }
         .background(rowBackground, in: RoundedRectangle(cornerRadius: 8))
@@ -434,6 +614,198 @@ struct LaterPageRow: View {
             return Color.accentColor.opacity(0.075)
         }
         return Color(nsColor: .controlBackgroundColor).opacity(0.72)
+    }
+}
+
+struct QuoteSourceGroupView: View {
+    var group: QuoteSourceGroup
+    var onOpenSource: (QuoteItem) -> Void
+    var onCopy: (QuoteItem) -> Void
+    var onRemove: (QuoteItem) -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(alignment: .firstTextBaseline, spacing: 10) {
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(group.title)
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(.primary)
+                        .lineLimit(1)
+
+                    HStack(spacing: 8) {
+                        Text(group.siteName ?? group.url.host(percentEncoded: false) ?? group.url.absoluteString)
+                        Text("\(group.items.count) quote\(group.items.count == 1 ? "" : "s")")
+                        Text(group.latestSavedAt.formatted(date: .abbreviated, time: .shortened))
+                    }
+                    .font(.caption.weight(.medium))
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                }
+
+                Spacer()
+
+                Button {
+                    if let first = group.items.first {
+                        onOpenSource(first)
+                    }
+                } label: {
+                    Image(systemName: "arrow.up.right")
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(.secondary)
+                        .frame(width: 28, height: 28)
+                }
+                .buttonStyle(.plain)
+                .help("Open Source")
+                .hoverIconButton(size: 28, cornerRadius: 7)
+            }
+
+            VStack(spacing: 8) {
+                ForEach(group.items) { item in
+                    QuoteReadingCard(item: item) {
+                        onOpenSource(item)
+                    } onCopy: {
+                        onCopy(item)
+                    } onRemove: {
+                        onRemove(item)
+                    }
+                }
+            }
+        }
+        .padding(12)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color(nsColor: .controlBackgroundColor).opacity(0.58), in: RoundedRectangle(cornerRadius: 8))
+        .overlay {
+            RoundedRectangle(cornerRadius: 8)
+                .stroke(Color(nsColor: .separatorColor).opacity(0.38), lineWidth: 1)
+        }
+    }
+}
+
+struct QuoteReadingCard: View {
+    var item: QuoteItem
+    var onOpenSource: () -> Void
+    var onCopy: () -> Void
+    var onRemove: () -> Void
+
+    @State private var isHovering = false
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 18) {
+            HStack(alignment: .top, spacing: 14) {
+                Text("“")
+                    .font(.system(size: 42, weight: .regular, design: .serif))
+                    .foregroundStyle(.tertiary)
+                    .frame(width: 22, alignment: .leading)
+                    .padding(.top, -8)
+
+                VStack(alignment: .leading, spacing: 13) {
+                    ForEach(Array(paragraphs.enumerated()), id: \.offset) { index, paragraph in
+                        if paragraph == "[...]" {
+                            Text("[...]")
+                                .font(.system(size: 16, weight: .regular, design: .serif))
+                                .italic()
+                                .foregroundStyle(.secondary)
+                                .textSelection(.enabled)
+                        } else {
+                            Text(displayText(for: paragraph, at: index))
+                                .font(.system(size: 19, weight: .regular, design: .serif))
+                                .foregroundStyle(.primary)
+                                .lineSpacing(4)
+                                .fixedSize(horizontal: false, vertical: true)
+                                .textSelection(.enabled)
+                        }
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+
+            Divider()
+                .opacity(0.45)
+
+            HStack(alignment: .center, spacing: 12) {
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(item.sourceTitle ?? item.sourceURL.absoluteString)
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.primary)
+                        .lineLimit(1)
+
+                    HStack(spacing: 8) {
+                        Text(item.siteName ?? item.sourceURL.host(percentEncoded: false) ?? item.sourceURL.absoluteString)
+                        Text(item.savedAt.formatted(date: .abbreviated, time: .shortened))
+                    }
+                    .font(.caption.weight(.medium))
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                }
+
+                Spacer()
+
+                Button {
+                    onCopy()
+                } label: {
+                    Image(systemName: "doc.on.doc")
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(.secondary)
+                        .frame(width: 26, height: 26)
+                }
+                .buttonStyle(.plain)
+                .help("Copy Quote")
+                .hoverIconButton(size: 26, cornerRadius: 7)
+
+                Button {
+                    onOpenSource()
+                } label: {
+                    Image(systemName: "arrow.up.right")
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(.secondary)
+                        .frame(width: 26, height: 26)
+                }
+                .buttonStyle(.plain)
+                .help("Open Source")
+                .hoverIconButton(size: 26, cornerRadius: 7)
+
+                Button {
+                    onRemove()
+                } label: {
+                    Image(systemName: "xmark")
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(.secondary)
+                        .frame(width: 26, height: 26)
+                }
+                .buttonStyle(.plain)
+                .help("Remove Quote")
+                .hoverIconButton(size: 26, cornerRadius: 7, isDestructive: true)
+            }
+        }
+        .padding(.horizontal, 22)
+        .padding(.vertical, 20)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            isHovering ? Color.accentColor.opacity(0.04) : Color(nsColor: .textBackgroundColor).opacity(0.72),
+            in: RoundedRectangle(cornerRadius: 8)
+        )
+        .overlay {
+            RoundedRectangle(cornerRadius: 8)
+                .stroke(Color(nsColor: .separatorColor).opacity(isHovering ? 0.46 : 0.24), lineWidth: 1)
+        }
+        .onHover { isHovering = $0 }
+    }
+
+    private var paragraphs: [String] {
+        let paragraphBreak = "\u{2029}"
+        let normalized = item.text
+            .replacingOccurrences(of: "\r\n", with: "\n")
+            .replacingOccurrences(of: "\r", with: "\n")
+            .replacingOccurrences(of: "[ \\t\\f\\v]*\\n[ \\t\\f\\v]*\\n+[ \\t\\f\\v]*", with: paragraphBreak, options: .regularExpression)
+        let values = normalized
+            .components(separatedBy: paragraphBreak)
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+        return values.isEmpty ? [item.text] : values
+    }
+
+    private func displayText(for paragraph: String, at index: Int) -> String {
+        index == paragraphs.count - 1 ? "\(paragraph)”" : paragraph
     }
 }
 
@@ -554,6 +926,7 @@ struct LaterPopoverRow: View {
             }
             .buttonStyle(.plain)
             .help("Remove from Later")
+            .hoverIconButton(size: 26, cornerRadius: 7, isDestructive: true)
         }
         .padding(.leading, 11)
         .padding(.trailing, 6)

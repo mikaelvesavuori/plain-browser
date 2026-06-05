@@ -286,6 +286,7 @@ struct PlainNewsView: View {
                         }
                         .buttonStyle(.borderless)
                         .help("Clear Digest")
+                        .hoverIconButton(size: 28, cornerRadius: 7, isDestructive: true)
                     }
 
                     if isRunning {
@@ -612,6 +613,7 @@ struct PlainNewsSourceRow: View {
             }
             .buttonStyle(.plain)
             .help("Remove")
+            .hoverIconButton(size: 26, cornerRadius: 7, isDestructive: true)
         }
         .padding(.leading, 8)
         .padding(.trailing, 6)
@@ -881,6 +883,7 @@ struct PlainNewsDigestRow: View {
                 .buttonStyle(.plain)
                 .disabled(isSavedForLater())
                 .help(isSavedForLater() ? "Saved to Later" : "Save to Later")
+                .hoverIconButton(size: 28, cornerRadius: 7)
 
                 Button {
                     onOpen()
@@ -893,6 +896,7 @@ struct PlainNewsDigestRow: View {
                 }
                 .buttonStyle(.plain)
                 .help("Open")
+                .hoverIconButton(size: 28, cornerRadius: 7)
             }
             .padding(.top, 1)
         }

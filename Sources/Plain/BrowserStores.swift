@@ -21,6 +21,31 @@ struct LaterItem: Codable, Equatable, Identifiable {
     var addedAt: Date
 }
 
+struct QuoteItem: Codable, Equatable, Identifiable {
+    var id: UUID
+    var text: String
+    var sourceURL: URL
+    var sourceTitle: String?
+    var siteName: String?
+    var savedAt: Date
+
+    init(
+        id: UUID = UUID(),
+        text: String,
+        sourceURL: URL,
+        sourceTitle: String? = nil,
+        siteName: String? = nil,
+        savedAt: Date = Date()
+    ) {
+        self.id = id
+        self.text = text
+        self.sourceURL = sourceURL
+        self.sourceTitle = sourceTitle
+        self.siteName = siteName
+        self.savedAt = savedAt
+    }
+}
+
 struct HistoryStore {
     private let key = "Plain.History"
     private let limit = 20
@@ -74,6 +99,37 @@ struct LaterStore {
     }
 
     func save(_ items: [LaterItem]) {
+        guard let data = try? JSONEncoder().encode(items) else {
+            return
+        }
+        UserDefaults.standard.set(data, forKey: key)
+    }
+}
+
+struct QuoteStore {
+    private let key = "Plain.Quotes"
+
+    func load() -> [QuoteItem] {
+        guard let data = UserDefaults.standard.data(forKey: key) else {
+            return []
+        }
+        return (try? JSONDecoder().decode([QuoteItem].self, from: data)) ?? []
+    }
+
+    func add(_ item: QuoteItem, to existing: [QuoteItem]) -> [QuoteItem] {
+        var values = existing
+        values.insert(item, at: 0)
+        save(values)
+        return values
+    }
+
+    func remove(_ item: QuoteItem, from existing: [QuoteItem]) -> [QuoteItem] {
+        let values = existing.filter { $0.id != item.id }
+        save(values)
+        return values
+    }
+
+    func save(_ items: [QuoteItem]) {
         guard let data = try? JSONEncoder().encode(items) else {
             return
         }

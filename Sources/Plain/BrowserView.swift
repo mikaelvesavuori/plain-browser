@@ -21,6 +21,9 @@ struct BrowserView: View {
     @State private var isFindPresented = false
     @State private var findQuery = ""
     @State private var selectedFindIndex = 0
+    @State private var isQuoteSelectionActive = false
+    @State private var selectedQuoteElementIDs: Set<Int> = []
+    @State private var quoteSelectionAnchorID: Int?
 
     private var appearance: AppAppearance {
         AppAppearance(rawValue: appearanceRawValue) ?? .system
@@ -46,8 +49,22 @@ struct BrowserView: View {
         isToolbarVisibleByPointer || isAddressFocused || isMoreMenuPresented || isLaterPopoverPresented
     }
 
+    private var isShowingStart: Bool {
+        if case .idle = viewModel.state {
+            return true
+        }
+        return false
+    }
+
     private var isShowingNews: Bool {
         if case .news = viewModel.state {
+            return true
+        }
+        return false
+    }
+
+    private var isShowingQuotes: Bool {
+        if case .quotes = viewModel.state {
             return true
         }
         return false
@@ -59,6 +76,10 @@ struct BrowserView: View {
 
     private var canNavigateForwardSurface: Bool {
         viewModel.canGoToNextLaterItem || viewModel.canGoForward
+    }
+
+    private var canCollectQuoteBlocks: Bool {
+        viewModel.currentDocument != nil
     }
 
     private var canUseLaterKeyNavigation: Bool {
@@ -107,6 +128,7 @@ struct BrowserView: View {
             canSaveForLater: viewModel.currentURL != nil,
             canShowLater: true,
             canShowHistory: !viewModel.recentPages.isEmpty,
+            canShowQuotes: true,
             canExportLater: !viewModel.laterItems.isEmpty,
             canDecreaseTextSize: readerTextSize.canDecrease,
             canIncreaseTextSize: readerTextSize.canIncrease,
@@ -125,9 +147,11 @@ struct BrowserView: View {
             toggleFullScreen: toggleFullScreen,
             openInDefaultBrowser: viewModel.openCurrentInDefaultBrowser,
             saveForLater: viewModel.toggleCurrentLater,
+            showStart: showStart,
             showLater: showLater,
             showHistory: showHistory,
             showNews: showNews,
+            showQuotes: showQuotes,
             exportLater: viewModel.exportLater,
             copyCleanText: viewModel.copyCleanText,
             copyMarkdown: viewModel.copyMarkdown
@@ -161,6 +185,18 @@ struct BrowserView: View {
                     .allowsHitTesting(false)
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
                     .zIndex(3)
+            }
+
+            if isQuoteSelectionActive {
+                FloatingQuoteSelectionPanel(
+                    selectedCount: selectedQuoteElementIDs.count,
+                    onSave: saveSelectedQuoteBlocks,
+                    onCancel: clearQuoteSelection
+                )
+                .padding(.bottom, 22)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+                .transition(.move(edge: .bottom).combined(with: .opacity))
+                .zIndex(4)
             }
         }
         .frame(minWidth: 860, minHeight: 620)
@@ -241,6 +277,7 @@ struct BrowserView: View {
         }
         .onChange(of: viewModel.currentURL) { _, _ in
             selectedFindIndex = 0
+            clearQuoteSelection()
         }
         .onDisappear {
             toolbarHideTask?.cancel()
@@ -283,6 +320,35 @@ struct BrowserView: View {
                     .stroke(Color(nsColor: .separatorColor).opacity(0.55), lineWidth: 1)
             }
 
+            HStack(spacing: 4) {
+                ToolbarIconButton(
+                    systemName: "house",
+                    help: "Start",
+                    isActive: isShowingStart
+                ) {
+                    showStart()
+                }
+
+                ToolbarIconButton(
+                    systemName: "quote.bubble",
+                    help: "Quotes",
+                    isActive: isShowingQuotes
+                ) {
+                    showQuotes()
+                }
+
+                ToolbarIconButton(
+                    systemName: "newspaper",
+                    help: "Plain News",
+                    isActive: isShowingNews
+                ) {
+                    showNews()
+                }
+            }
+
+            Divider()
+                .frame(height: 22)
+
             addressBar
 
             ToolbarIconButton(
@@ -292,6 +358,15 @@ struct BrowserView: View {
                 isActive: viewModel.currentIsInLater
             ) {
                 viewModel.toggleCurrentLater()
+            }
+
+            ToolbarIconButton(
+                systemName: "quote.opening",
+                help: quoteSelectionHelpText,
+                isEnabled: canCollectQuoteBlocks,
+                isActive: isQuoteSelectionActive
+            ) {
+                handleQuoteToolbarAction()
             }
 
             ToolbarIconButton(
@@ -330,14 +405,6 @@ struct BrowserView: View {
                     }
                 )
                 .preferredColorScheme(appearance.preferredColorScheme)
-            }
-
-            ToolbarIconButton(
-                systemName: "newspaper",
-                help: "Plain News",
-                isActive: isShowingNews
-            ) {
-                showNews()
             }
 
             Divider()
@@ -577,6 +644,7 @@ struct BrowserView: View {
             StartView(
                 recentPages: viewModel.recentPages,
                 laterItems: viewModel.laterItems,
+                quoteItems: viewModel.quoteItems,
                 showsWelcome: !hasSeenWelcome,
                 topChromeInset: toolbarContentInset,
                 onOpen: viewModel.loadRecent,
@@ -585,6 +653,7 @@ struct BrowserView: View {
                 onExportLater: viewModel.exportLater,
                 onClearLater: viewModel.clearLater,
                 onShowNews: showNews,
+                onShowQuotes: showQuotes,
                 onClear: viewModel.clearHistory,
                 onDismissWelcome: {
                     hasSeenWelcome = true
@@ -601,7 +670,12 @@ struct BrowserView: View {
                 topChromeInset: toolbarContentInset,
                 onOpenLink: viewModel.openLink,
                 onOpenExternalLink: viewModel.openLinkInDefaultBrowser,
-                onSaveImage: viewModel.saveImage
+                onSaveImage: viewModel.saveImage,
+                onSaveQuote: viewModel.saveQuote,
+                isQuoteSelectionActive: isQuoteSelectionActive,
+                selectedQuoteElementIDs: selectedQuoteElementIDs,
+                onSelectQuoteElement: selectQuoteElement,
+                onDragSelectQuoteElement: addQuoteElementToSelection
             )
         case .failed(let failure):
             FailureView(
@@ -632,6 +706,16 @@ struct BrowserView: View {
                 onClearDigest: viewModel.clearNewsDigest,
                 onOpenItem: viewModel.openNewsItem,
                 onSaveItemForLater: viewModel.saveNewsItemForLater
+            )
+        case .quotes:
+            QuotesLibraryView(
+                quoteItems: viewModel.quoteItems,
+                topChromeInset: toolbarContentInset,
+                onOpenQuoteSource: viewModel.loadQuoteSource,
+                onCopyQuote: viewModel.copyQuote,
+                onRemoveQuote: viewModel.removeQuote,
+                onExportQuotes: viewModel.exportQuotes,
+                onClearQuotes: viewModel.clearQuotes
             )
         }
     }
@@ -665,6 +749,18 @@ struct BrowserView: View {
         effectiveColorScheme == .dark ? "Switch to Light Mode" : "Switch to Dark Mode"
     }
 
+    private var quoteSelectionHelpText: String {
+        if !isQuoteSelectionActive {
+            return "Collect Quote Blocks"
+        }
+
+        if selectedQuoteElementIDs.isEmpty {
+            return "Cancel Quote Selection"
+        }
+
+        return "Save Quote Selection"
+    }
+
     private func toggleAppearance() {
         appearanceRawValue = effectiveColorScheme == .dark
             ? AppAppearance.light.rawValue
@@ -673,6 +769,102 @@ struct BrowserView: View {
 
     private func toggleImages() {
         viewModel.showsImages.toggle()
+    }
+
+    private func handleQuoteToolbarAction() {
+        guard canCollectQuoteBlocks else {
+            clearQuoteSelection()
+            return
+        }
+
+        if isQuoteSelectionActive {
+            if selectedQuoteElementIDs.isEmpty {
+                clearQuoteSelection()
+            } else {
+                saveSelectedQuoteBlocks()
+            }
+            return
+        }
+
+        isQuoteSelectionActive = true
+        selectedQuoteElementIDs = []
+        quoteSelectionAnchorID = nil
+        withAnimation(toolbarAnimation) {
+            isToolbarVisibleByPointer = true
+        }
+    }
+
+    private func selectQuoteElement(_ id: Int) {
+        if isShiftKeyPressed, let anchorID = quoteSelectionAnchorID {
+            let bounds = min(anchorID, id)...max(anchorID, id)
+            selectedQuoteElementIDs = Set(bounds)
+            return
+        }
+
+        if selectedQuoteElementIDs.contains(id) {
+            selectedQuoteElementIDs.remove(id)
+        } else {
+            selectedQuoteElementIDs.insert(id)
+            quoteSelectionAnchorID = id
+        }
+
+        if selectedQuoteElementIDs.isEmpty {
+            quoteSelectionAnchorID = nil
+        }
+    }
+
+    private func addQuoteElementToSelection(_ id: Int) {
+        selectedQuoteElementIDs.insert(id)
+        if quoteSelectionAnchorID == nil {
+            quoteSelectionAnchorID = id
+        }
+    }
+
+    private func saveSelectedQuoteBlocks() {
+        guard let document = viewModel.currentDocument else {
+            clearQuoteSelection()
+            return
+        }
+
+        let blocks = selectedQuoteBlocks(from: document)
+
+        guard !blocks.isEmpty else {
+            return
+        }
+
+        viewModel.saveQuoteBlocks(blocks)
+        clearQuoteSelection()
+    }
+
+    private func selectedQuoteBlocks(from document: DocumentModel) -> [String] {
+        var blocks: [String] = []
+        var previousIndex: Int?
+
+        for index in selectedQuoteElementIDs.sorted() {
+            guard document.elements.indices.contains(index),
+                  let text = document.elements[index].quotePlainText else {
+                continue
+            }
+
+            if let previousIndex, index > previousIndex + 1 {
+                blocks.append("[...]")
+            }
+
+            blocks.append(text)
+            previousIndex = index
+        }
+
+        return blocks
+    }
+
+    private func clearQuoteSelection() {
+        isQuoteSelectionActive = false
+        selectedQuoteElementIDs = []
+        quoteSelectionAnchorID = nil
+    }
+
+    private var isShiftKeyPressed: Bool {
+        NSApp.currentEvent?.modifierFlags.intersection(.deviceIndependentFlagsMask).contains(.shift) == true
     }
 
     private func toggleReaderFontFamily() {
@@ -710,24 +902,50 @@ struct BrowserView: View {
     }
 
     private func showHistory() {
+        showStart()
+    }
+
+    private func showStart() {
         isMoreMenuPresented = false
         isLaterPopoverPresented = false
         isAddressFocused = false
         isFindFocused = false
         closeFind()
-        viewModel.showHistory()
+        viewModel.showStart()
         withAnimation(toolbarAnimation) {
             isToolbarVisibleByPointer = true
         }
     }
 
     private func showNews() {
+        if isShowingNews {
+            showStart()
+            return
+        }
+
         isMoreMenuPresented = false
         isLaterPopoverPresented = false
         isAddressFocused = false
         isFindFocused = false
         closeFind()
         viewModel.showNews()
+        withAnimation(toolbarAnimation) {
+            isToolbarVisibleByPointer = true
+        }
+    }
+
+    private func showQuotes() {
+        if isShowingQuotes {
+            showStart()
+            return
+        }
+
+        isMoreMenuPresented = false
+        isLaterPopoverPresented = false
+        isAddressFocused = false
+        isFindFocused = false
+        closeFind()
+        viewModel.showQuotes()
         withAnimation(toolbarAnimation) {
             isToolbarVisibleByPointer = true
         }
@@ -895,5 +1113,55 @@ struct BrowserView: View {
                 }
             }
         }
+    }
+}
+
+private struct FloatingQuoteSelectionPanel: View {
+    var selectedCount: Int
+    var onSave: () -> Void
+    var onCancel: () -> Void
+
+    var body: some View {
+        HStack(spacing: 10) {
+            VStack(alignment: .leading, spacing: 1) {
+                Label("\(selectedCount) selected", systemImage: "quote.opening")
+                    .font(.callout.weight(.semibold))
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                Text("Drag or Shift-click passages")
+                    .font(.caption2.weight(.medium))
+                    .foregroundStyle(.tertiary)
+                    .lineLimit(1)
+            }
+
+            Button {
+                onCancel()
+            } label: {
+                Image(systemName: "xmark")
+                    .font(.system(size: 12, weight: .bold))
+                    .frame(width: 28, height: 28)
+            }
+            .buttonStyle(.plain)
+            .help("Cancel Quote Selection")
+            .hoverIconButton(size: 28, cornerRadius: 7, isDestructive: true)
+
+            Button {
+                onSave()
+            } label: {
+                Label("Save Quote", systemImage: "checkmark")
+                    .font(.callout.weight(.semibold))
+            }
+            .buttonStyle(.borderedProminent)
+            .disabled(selectedCount == 0)
+        }
+        .padding(.leading, 14)
+        .padding(.trailing, 8)
+        .padding(.vertical, 8)
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 8))
+        .overlay {
+            RoundedRectangle(cornerRadius: 8)
+                .stroke(Color(nsColor: .separatorColor).opacity(0.55), lineWidth: 1)
+        }
+        .shadow(color: .black.opacity(0.14), radius: 16, y: 6)
     }
 }

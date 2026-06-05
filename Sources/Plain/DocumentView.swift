@@ -11,6 +11,11 @@ struct DocumentView: View {
     var onOpenLink: (URL) -> Void
     var onOpenExternalLink: (URL) -> Void
     var onSaveImage: (ImageRef) -> Void
+    var onSaveQuote: (String) -> Void
+    var isQuoteSelectionActive: Bool
+    var selectedQuoteElementIDs: Set<Int>
+    var onSelectQuoteElement: (Int) -> Void
+    var onDragSelectQuoteElement: (Int) -> Void
 
     private var contentMaxWidth: CGFloat {
         if document.elements.contains(where: \.isSearchResult) {
@@ -28,14 +33,23 @@ struct DocumentView: View {
                         .findTargetHighlight(selectedFindTarget == .header)
 
                     ForEach(Array(document.elements.enumerated()), id: \.offset) { index, element in
-                        DocumentElementView(
-                            element: element,
-                            showsImages: showsImages,
-                            readerSettings: readerSettings,
-                            onOpenLink: onOpenLink,
-                            onOpenExternalLink: onOpenExternalLink,
-                            onSaveImage: onSaveImage
-                        )
+                        QuoteSelectableElementView(
+                            id: index,
+                            isEnabled: isQuoteSelectionActive && element.quotePlainText != nil,
+                            isSelected: selectedQuoteElementIDs.contains(index),
+                            onSelect: onSelectQuoteElement,
+                            onDragSelect: onDragSelectQuoteElement
+                        ) {
+                            DocumentElementView(
+                                element: element,
+                                showsImages: showsImages,
+                                readerSettings: readerSettings,
+                                onOpenLink: onOpenLink,
+                                onOpenExternalLink: onOpenExternalLink,
+                                onSaveImage: onSaveImage,
+                                onSaveQuote: onSaveQuote
+                            )
+                        }
                         .id(DocumentFindTarget.element(index))
                         .findTargetHighlight(selectedFindTarget == .element(index))
                     }
@@ -150,6 +164,65 @@ struct DocumentView: View {
     }
 }
 
+private struct QuoteSelectableElementView<Content: View>: View {
+    var id: Int
+    var isEnabled: Bool
+    var isSelected: Bool
+    var onSelect: (Int) -> Void
+    var onDragSelect: (Int) -> Void
+    @ViewBuilder var content: () -> Content
+    @State private var isHovering = false
+
+    var body: some View {
+        if isEnabled {
+            content()
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .allowsHitTesting(false)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 10)
+            .background(
+                selectionBackground,
+                in: RoundedRectangle(cornerRadius: 8)
+            )
+            .overlay {
+                RoundedRectangle(cornerRadius: 8)
+                    .stroke(
+                        isSelected ? Color.accentColor.opacity(0.42) : Color(nsColor: .separatorColor).opacity(isHovering ? 0.28 : 0),
+                        lineWidth: 1
+                    )
+            }
+            .contentShape(RoundedRectangle(cornerRadius: 8))
+            .onTapGesture {
+                onSelect(id)
+            }
+            .gesture(
+                DragGesture(minimumDistance: 8)
+                    .onChanged { _ in
+                        onDragSelect(id)
+                    }
+            )
+            .onHover { hovering in
+                isHovering = hovering
+                if hovering && NSEvent.pressedMouseButtons & 1 == 1 {
+                    onDragSelect(id)
+                }
+            }
+        } else {
+            content()
+        }
+    }
+
+    private var selectionBackground: Color {
+        if isSelected {
+            return Color(nsColor: .selectedTextBackgroundColor).opacity(0.22)
+        }
+        if isHovering {
+            return Color(nsColor: .selectedTextBackgroundColor).opacity(0.08)
+        }
+        return Color.clear
+    }
+}
+
 private struct SourceLine: View {
     var host: String
     var url: URL
@@ -227,13 +300,20 @@ private struct DocumentElementView: View {
     var onOpenLink: (URL) -> Void
     var onOpenExternalLink: (URL) -> Void
     var onSaveImage: (ImageRef) -> Void
+    var onSaveQuote: (String) -> Void
 
     var body: some View {
         switch element {
         case .heading(let level, let text):
             HeadingView(level: level, text: text, readerSettings: readerSettings)
         case .paragraph(let inline):
-            ParagraphView(inline: inline, readerSettings: readerSettings, onOpenLink: onOpenLink, onOpenExternalLink: onOpenExternalLink)
+            ParagraphView(
+                inline: inline,
+                readerSettings: readerSettings,
+                onOpenLink: onOpenLink,
+                onOpenExternalLink: onOpenExternalLink,
+                onSaveQuote: onSaveQuote
+            )
         case .searchResult(let result):
             SearchResultView(result: result, readerSettings: readerSettings, onOpenLink: onOpenLink, onOpenExternalLink: onOpenExternalLink)
         case .image(let image):
@@ -253,7 +333,8 @@ private struct DocumentElementView: View {
                         readerSettings: readerSettings,
                         onOpenLink: onOpenLink,
                         onOpenExternalLink: onOpenExternalLink,
-                        onSaveImage: onSaveImage
+                        onSaveImage: onSaveImage,
+                        onSaveQuote: onSaveQuote
                     )
                 }
             }
@@ -287,7 +368,8 @@ private struct DocumentElementView: View {
                                     readerSettings: readerSettings,
                                     onOpenLink: onOpenLink,
                                     onOpenExternalLink: onOpenExternalLink,
-                                    onSaveImage: onSaveImage
+                                    onSaveImage: onSaveImage,
+                                    onSaveQuote: onSaveQuote
                                 )
                             }
                         }

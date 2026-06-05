@@ -10,6 +10,7 @@ struct PlainCommandActions {
     var canSaveForLater: Bool
     var canShowLater: Bool
     var canShowHistory: Bool
+    var canShowQuotes: Bool
     var canExportLater: Bool
     var canDecreaseTextSize: Bool
     var canIncreaseTextSize: Bool
@@ -28,9 +29,11 @@ struct PlainCommandActions {
     var toggleFullScreen: () -> Void
     var openInDefaultBrowser: () -> Void
     var saveForLater: () -> Void
+    var showStart: () -> Void
     var showLater: () -> Void
     var showHistory: () -> Void
     var showNews: () -> Void
+    var showQuotes: () -> Void
     var exportLater: () -> Void
     var copyCleanText: () -> Void
     var copyMarkdown: () -> Void
@@ -88,6 +91,11 @@ struct PlainCommands: Commands {
 
             Divider()
 
+            Button("Show Start Page") {
+                actions?.showStart()
+            }
+            .disabled(actions == nil)
+
             Button("Save/Remove from Later") {
                 actions?.saveForLater()
             }
@@ -105,6 +113,11 @@ struct PlainCommands: Commands {
             }
             .keyboardShortcut("y", modifiers: [.command])
             .disabled(actions?.canShowHistory != true)
+
+            Button("Show Quotes") {
+                actions?.showQuotes()
+            }
+            .disabled(actions?.canShowQuotes != true)
 
             Button("Show Plain News") {
                 actions?.showNews()

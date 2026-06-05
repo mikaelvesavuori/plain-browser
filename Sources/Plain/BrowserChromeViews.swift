@@ -58,6 +58,7 @@ struct UpdateNoticeBanner: View {
             }
             .buttonStyle(.plain)
             .contentShape(Rectangle())
+            .hoverIconButton(size: 22, cornerRadius: 6)
             .help("Dismiss")
         }
         .foregroundStyle(.primary)

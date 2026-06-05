@@ -12,12 +12,14 @@ final class BrowserViewModel: ObservableObject {
         case loaded(DocumentModel)
         case failed(ReaderFailure)
         case news
+        case quotes
     }
 
     @Published var address: String = ""
     @Published private(set) var state: State = .idle
     @Published private(set) var recentPages: [HistoryItem] = []
     @Published private(set) var laterItems: [LaterItem] = []
+    @Published private(set) var quoteItems: [QuoteItem] = []
     @Published private(set) var newsSources: [PlainNewsSource] = []
     @Published var newsInterestProfile: String = "" {
         didSet {
@@ -53,6 +55,7 @@ final class BrowserViewModel: ObservableObject {
     private var currentIndex: Int?
     private let historyStore = HistoryStore()
     private let laterStore = LaterStore()
+    private let quoteStore = QuoteStore()
     private let newsStore = PlainNewsStore()
     private var newsPipeline = PlainNewsPipeline()
     private let imageCache = ImageCache()
@@ -68,6 +71,7 @@ final class BrowserViewModel: ObservableObject {
     init() {
         recentPages = historyStore.load()
         laterItems = laterStore.load()
+        quoteItems = quoteStore.load()
         newsSources = newsStore.loadSources()
         newsInterestProfile = newsStore.loadInterests()
         newsWindow = newsStore.loadWindow()
@@ -84,7 +88,7 @@ final class BrowserViewModel: ObservableObject {
         switch state {
         case .loaded, .failed:
             break
-        case .idle, .loading, .news:
+        case .idle, .loading, .news, .quotes:
             return false
         }
 
@@ -96,7 +100,7 @@ final class BrowserViewModel: ObservableObject {
         switch state {
         case .loaded, .failed:
             break
-        case .idle, .loading, .news:
+        case .idle, .loading, .news, .quotes:
             return false
         }
 
@@ -133,7 +137,7 @@ final class BrowserViewModel: ObservableObject {
             return document.finalURL
         case .failed(let failure):
             return failure.url
-        case .news:
+        case .news, .quotes:
             return nil
         case .idle:
             return nil
@@ -184,7 +188,20 @@ final class BrowserViewModel: ObservableObject {
         loadLaterItem(item)
     }
 
+    func loadQuoteSource(_ item: QuoteItem) {
+        address = item.sourceURL.absoluteString
+        clearNewsReturn()
+        clearLaterNavigation()
+        Task {
+            await load(item.sourceURL.absoluteString)
+        }
+    }
+
     func showHistory() {
+        showStart()
+    }
+
+    func showStart() {
         address = ""
         clearNewsReturn()
         clearLaterNavigation()
@@ -194,6 +211,13 @@ final class BrowserViewModel: ObservableObject {
     func showNews() {
         address = ""
         state = .news
+    }
+
+    func showQuotes() {
+        address = ""
+        clearNewsReturn()
+        clearLaterNavigation()
+        state = .quotes
     }
 
     func openLink(_ url: URL) {
@@ -358,6 +382,112 @@ final class BrowserViewModel: ObservableObject {
         clearLaterNavigation()
         laterStore.save([])
         setStatus("Later cleared")
+    }
+
+    func saveQuote(_ text: String) {
+        let normalized = normalizedQuoteText(text)
+        saveNormalizedQuote(normalized)
+    }
+
+    func saveQuoteBlocks(_ texts: [String]) {
+        let normalized = normalizedQuoteBlocks(texts)
+        saveNormalizedQuote(normalized)
+    }
+
+    private func saveNormalizedQuote(_ normalized: String) {
+        guard !normalized.isEmpty,
+              let document = currentDocument else {
+            return
+        }
+
+        let item = QuoteItem(
+            text: normalized,
+            sourceURL: document.finalURL,
+            sourceTitle: document.title,
+            siteName: document.siteName,
+            savedAt: Date()
+        )
+        quoteItems = quoteStore.add(item, to: quoteItems)
+        setStatus("Quote saved to Quotes")
+    }
+
+    private func normalizedQuoteBlocks(_ texts: [String]) -> String {
+        texts
+            .flatMap(quoteParagraphs(from:))
+            .map(normalizedQuoteParagraph(_:))
+            .filter { !$0.isEmpty }
+            .joined(separator: "\n\n")
+    }
+
+    private func normalizedQuoteText(_ text: String) -> String {
+        quoteParagraphs(from: text)
+            .map(normalizedQuoteParagraph(_:))
+            .filter { !$0.isEmpty }
+            .joined(separator: "\n\n")
+    }
+
+    private func quoteParagraphs(from text: String) -> [String] {
+        let paragraphBreak = "\u{2029}"
+        let normalized = text
+            .replacingOccurrences(of: "\r\n", with: "\n")
+            .replacingOccurrences(of: "\r", with: "\n")
+            .replacingOccurrences(of: "[ \\t\\f\\v]*\\n[ \\t\\f\\v]*\\n+[ \\t\\f\\v]*", with: paragraphBreak, options: .regularExpression)
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+
+        return normalized
+            .components(separatedBy: paragraphBreak)
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+    }
+
+    private func normalizedQuoteParagraph(_ text: String) -> String {
+        text
+            .replacingOccurrences(of: "[ \\t\\f\\v]*\\n[ \\t\\f\\v]*", with: " ", options: .regularExpression)
+            .replacingOccurrences(of: "[ \\t\\f\\v]+", with: " ", options: .regularExpression)
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    func removeQuote(_ item: QuoteItem) {
+        quoteItems = quoteStore.remove(item, from: quoteItems)
+        setStatus("Quote removed")
+    }
+
+    func clearQuotes() {
+        quoteItems = []
+        quoteStore.save([])
+        setStatus("Quotes cleared")
+    }
+
+    func copyQuote(_ item: QuoteItem) {
+        copyToPasteboard(markdown(for: item))
+        setStatus("Quote copied")
+    }
+
+    func exportQuotes() {
+        guard !quoteItems.isEmpty else {
+            setStatus("Quotes are empty")
+            return
+        }
+
+        let panel = NSSavePanel()
+        panel.title = "Export Quotes"
+        panel.nameFieldStringValue = "Plain Quotes.md"
+        if let markdownType = UTType(filenameExtension: "md") {
+            panel.allowedContentTypes = [markdownType, .plainText]
+        } else {
+            panel.allowedContentTypes = [.plainText]
+        }
+        panel.canCreateDirectories = true
+
+        guard panel.runModal() == .OK, let url = panel.url else {
+            return
+        }
+
+        do {
+            try quotesMarkdown().write(to: url, atomically: true, encoding: .utf8)
+            setStatus("Quotes exported")
+        } catch {
+            setStatus("Could not export Quotes")
+        }
     }
 
     func loadPreviousLaterItem() {
@@ -656,6 +786,33 @@ final class BrowserViewModel: ObservableObject {
         pasteboard.setString(text, forType: .string)
     }
 
+    private func markdown(for item: QuoteItem) -> String {
+        """
+        \(markdownQuoteText(item.text))
+
+        Source: [\(item.sourceTitle ?? item.sourceURL.absoluteString)](\(item.sourceURL.absoluteString))
+        Saved: \(item.savedAt.formatted(date: .abbreviated, time: .shortened))
+        """
+    }
+
+    private func markdownQuoteText(_ text: String) -> String {
+        text
+            .replacingOccurrences(of: "\r\n", with: "\n")
+            .replacingOccurrences(of: "\r", with: "\n")
+            .split(separator: "\n", omittingEmptySubsequences: false)
+            .map { line in
+                line.isEmpty ? ">" : "> \(line)"
+            }
+            .joined(separator: "\n")
+    }
+
+    private func quotesMarkdown() -> String {
+        quoteItems
+            .sorted { $0.savedAt > $1.savedAt }
+            .map(markdown(for:))
+            .joined(separator: "\n\n---\n\n")
+    }
+
     private func shouldOpenOutsidePlain(_ url: URL) -> Bool {
         guard let scheme = url.scheme?.lowercased() else {
             return false
@@ -681,7 +838,7 @@ final class BrowserViewModel: ObservableObject {
             return newsReturnNavigation.canReturnFromLoadedDocument(currentIndex: currentIndex)
         case .failed:
             return newsReturnNavigation.canReturnFromFailure
-        case .idle, .loading, .news:
+        case .idle, .loading, .news, .quotes:
             return false
         }
     }
@@ -702,7 +859,7 @@ final class BrowserViewModel: ObservableObject {
         switch state {
         case .loaded, .failed:
             return true
-        case .idle, .loading, .news:
+        case .idle, .loading, .news, .quotes:
             return false
         }
     }
@@ -755,7 +912,7 @@ final class BrowserViewModel: ObservableObject {
         case .failed(let failure):
             pageDetails.append("failure: \(failure.title)")
             pageDetails.append("message: \(failure.message)")
-        case .loading, .idle, .news:
+        case .loading, .idle, .news, .quotes:
             break
         }
 

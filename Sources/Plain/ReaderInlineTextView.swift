@@ -7,6 +7,7 @@ struct ParagraphView: View {
     var readerSettings: ReaderDisplaySettings
     var onOpenLink: (URL) -> Void
     var onOpenExternalLink: (URL) -> Void
+    var onSaveQuote: (String) -> Void
 
     @State private var measuredHeight: CGFloat = 28
 
@@ -18,7 +19,8 @@ struct ParagraphView: View {
                 readerSettings: readerSettings,
                 measuredHeight: $measuredHeight,
                 onOpenLink: onOpenLink,
-                onOpenExternalLink: onOpenExternalLink
+                onOpenExternalLink: onOpenExternalLink,
+                onSaveQuote: onSaveQuote
             )
         }
         .frame(height: measuredHeight)
@@ -32,6 +34,7 @@ private struct ReaderInlineTextView: NSViewRepresentable {
     @Binding var measuredHeight: CGFloat
     var onOpenLink: (URL) -> Void
     var onOpenExternalLink: (URL) -> Void
+    var onSaveQuote: (String) -> Void
 
     func makeNSView(context: Context) -> LinkAwareTextView {
         let textView = LinkAwareTextView()
@@ -58,6 +61,7 @@ private struct ReaderInlineTextView: NSViewRepresentable {
     func updateNSView(_ textView: LinkAwareTextView, context: Context) {
         textView.onOpenLink = onOpenLink
         textView.onOpenExternalLink = onOpenExternalLink
+        textView.onSaveQuote = onSaveQuote
 
         let signature = "\(inline.signature)|\(readerSettings.signature)"
         if textView.renderedSignature != signature {
@@ -129,8 +133,8 @@ private struct ReaderInlineTextView: NSViewRepresentable {
                     text,
                     attributes: [
                         .font: NSFont.monospacedSystemFont(ofSize: readerSettings.scaled(16.2), weight: .regular),
-                        .foregroundColor: NSColor.secondaryLabelColor,
-                        .backgroundColor: NSColor.controlBackgroundColor.withAlphaComponent(0.72)
+                        .foregroundColor: NSColor.labelColor,
+                        .backgroundColor: NSColor.labelColor.withAlphaComponent(0.1)
                     ]
                 )
             case .link(let text, let url):
@@ -155,6 +159,7 @@ private struct ReaderInlineTextView: NSViewRepresentable {
 private final class LinkAwareTextView: NSTextView {
     var onOpenLink: ((URL) -> Void)?
     var onOpenExternalLink: ((URL) -> Void)?
+    var onSaveQuote: ((String) -> Void)?
     var renderedSignature = ""
     private var linkTrackingArea: NSTrackingArea?
 
@@ -200,6 +205,47 @@ private final class LinkAwareTextView: NSTextView {
         }
 
         super.mouseDown(with: event)
+    }
+
+    override func menu(for event: NSEvent) -> NSMenu? {
+        let menu = super.menu(for: event) ?? NSMenu()
+        let quote = selectedQuoteText
+        guard !quote.isEmpty else {
+            return menu
+        }
+
+        if menu.items.contains(where: { $0.action == #selector(saveQuoteFromSelection) }) {
+            return menu
+        }
+
+        if !menu.items.isEmpty {
+            menu.insertItem(.separator(), at: 0)
+        }
+
+        let item = NSMenuItem(title: "Save Quote", action: #selector(saveQuoteFromSelection), keyEquivalent: "")
+        item.target = self
+        menu.insertItem(item, at: 0)
+        return menu
+    }
+
+    @objc private func saveQuoteFromSelection() {
+        let quote = selectedQuoteText
+        guard !quote.isEmpty else {
+            return
+        }
+        onSaveQuote?(quote)
+    }
+
+    private var selectedQuoteText: String {
+        guard let string = string as NSString?,
+              selectedRange().location != NSNotFound,
+              selectedRange().length > 0 else {
+            return ""
+        }
+
+        return string.substring(with: selectedRange())
+            .replacingOccurrences(of: "\\s+", with: " ", options: .regularExpression)
+            .trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     private func addCursorRectsForLinks() {
