@@ -6,6 +6,8 @@ Plain is a narrow browser for readable pages, not a full browser replacement. It
 
 Plain News is a local-first digest feature. Users choose RSS or web sources, select a rolling or calendar time window, optionally add interests, and run a local reading pass. It uses Apple Foundation Models locally when available and otherwise falls back to local heuristic ranking. Do not describe Plain News as sending articles or interests to a remote AI service.
 
+Plain includes local Quotes and Later features. Quotes can save passages with notes and tags. Later can store a small reading queue with tags, progress, Markdown import, and Markdown export. Do not describe either as an account-based sync service.
+
 If a readable page looks wrong in Plain, users can report the URL and details to hello@browseplain.com or open a GitHub issue at https://github.com/mikaelvesavuori/plain-browser/issues/new.
 
 The assumed marketing domain is https://browseplain.com/.

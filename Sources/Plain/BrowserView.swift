@@ -153,6 +153,7 @@ struct BrowserView: View {
             showNews: showNews,
             showQuotes: showQuotes,
             exportLater: viewModel.exportLater,
+            importLater: viewModel.importLater,
             copyCleanText: viewModel.copyCleanText,
             copyMarkdown: viewModel.copyMarkdown
         )
@@ -393,9 +394,16 @@ struct BrowserView: View {
                             viewModel.removeFromLater(item)
                         }
                     },
+                    onUpdateTags: { item, tags in
+                        viewModel.updateLaterTags(item, tags: tags)
+                    },
                     onExport: {
                         isLaterPopoverPresented = false
                         viewModel.exportLater()
+                    },
+                    onImport: {
+                        isLaterPopoverPresented = false
+                        viewModel.importLater()
                     },
                     onClear: {
                         isLaterPopoverPresented = false
@@ -480,6 +488,10 @@ struct BrowserView: View {
                     onExportLater: {
                         isMoreMenuPresented = false
                         viewModel.exportLater()
+                    },
+                    onImportLater: {
+                        isMoreMenuPresented = false
+                        viewModel.importLater()
                     },
                     onClearLater: {
                         isMoreMenuPresented = false
@@ -650,7 +662,9 @@ struct BrowserView: View {
                 onOpen: viewModel.loadRecent,
                 onOpenLater: viewModel.loadLater,
                 onRemoveLater: viewModel.removeFromLater,
+                onUpdateLaterTags: viewModel.updateLaterTags,
                 onExportLater: viewModel.exportLater,
+                onImportLater: viewModel.importLater,
                 onClearLater: viewModel.clearLater,
                 onShowNews: showNews,
                 onShowQuotes: showQuotes,
@@ -672,6 +686,8 @@ struct BrowserView: View {
                 onOpenExternalLink: viewModel.openLinkInDefaultBrowser,
                 onSaveImage: viewModel.saveImage,
                 onSaveQuote: viewModel.saveQuote,
+                onReportIssue: viewModel.reportCurrentPageIssue,
+                onReadingProgressChange: viewModel.updateCurrentReadingProgress,
                 isQuoteSelectionActive: isQuoteSelectionActive,
                 selectedQuoteElementIDs: selectedQuoteElementIDs,
                 onSelectQuoteElement: selectQuoteElement,
@@ -714,6 +730,7 @@ struct BrowserView: View {
                 onOpenQuoteSource: viewModel.loadQuoteSource,
                 onCopyQuote: viewModel.copyQuote,
                 onRemoveQuote: viewModel.removeQuote,
+                onUpdateQuoteMetadata: viewModel.updateQuoteMetadata,
                 onExportQuotes: viewModel.exportQuotes,
                 onClearQuotes: viewModel.clearQuotes
             )

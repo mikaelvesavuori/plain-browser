@@ -150,6 +150,7 @@ struct MoreMenuPanel: View {
     var onCopyCleanText: () -> Void
     var onCopyMarkdown: () -> Void
     var onExportLater: () -> Void
+    var onImportLater: () -> Void
     var onClearLater: () -> Void
     var onShowHistory: () -> Void
     var onReportPageIssue: () -> Void
@@ -198,6 +199,13 @@ struct MoreMenuPanel: View {
                 isEnabled: canExportLater
             ) {
                 onExportLater()
+            }
+
+            MoreMenuRow(
+                title: "Import Later",
+                systemName: "square.and.arrow.down"
+            ) {
+                onImportLater()
             }
 
             MoreMenuRow(

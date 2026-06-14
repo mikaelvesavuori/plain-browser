@@ -12,6 +12,10 @@ Plain fetches HTML, removes the active web runtime, extracts useful text and ima
 
 Plain News is an integrated source-based digest. Users choose RSS or web sources, select a rolling or calendar time window, optionally provide interests, and run a local reading pass. It uses Apple Foundation Models locally when available, with a local heuristic fallback.
 
+Quotes is a local passage library for saved text, notes, tags, source links, copy, search, and Markdown export.
+
+Later is a local reading queue with search, tags, reading progress, Markdown import, and Markdown export.
+
 Plain is not a full replacement for Safari, Chrome, Firefox, or other general-purpose browsers. It is intentionally narrow and can hand pages that need a full web-app runtime to the default browser.
 
 ## Key Claims

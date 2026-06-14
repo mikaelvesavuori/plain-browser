@@ -29,6 +29,26 @@ private enum PlainNewsSourcePanelTab: String, CaseIterable {
     }
 }
 
+private enum PlainNewsDigestOrganization: String, CaseIterable, Hashable {
+    case source
+    case time
+
+    var label: String {
+        switch self {
+        case .source:
+            return "Source"
+        case .time:
+            return "Time"
+        }
+    }
+}
+
+private struct PlainNewsDigestSourceGroup: Identifiable {
+    var id: UUID
+    var sourceName: String
+    var items: [PlainNewsDigestItem]
+}
+
 struct PlainNewsView: View {
     var sources: [PlainNewsSource]
     @Binding var interestProfile: String
@@ -60,6 +80,7 @@ struct PlainNewsView: View {
     @State private var selectedPresetCategory: PlainNewsCategory?
     @State private var sourceSearch = ""
     @State private var sourcePanelTab = PlainNewsSourcePanelTab.browse
+    @State private var digestOrganization = PlainNewsDigestOrganization.source
 
     private var enabledSourceCount: Int {
         sources.filter(\.isEnabled).count
@@ -285,7 +306,7 @@ struct PlainNewsView: View {
                             Image(systemName: "xmark")
                         }
                         .buttonStyle(.borderless)
-                        .help("Clear Digest")
+                        .help("Close digest")
                         .hoverIconButton(size: 28, cornerRadius: 7, isDestructive: true)
                     }
 
@@ -320,19 +341,13 @@ struct PlainNewsView: View {
                 }
 
                 if let digest, !digest.items.isEmpty {
-                    VStack(spacing: 10) {
-                        ForEach(digest.items) { item in
-                            PlainNewsDigestRow(item: item) {
-                                onOpenItem(item)
-                            } onSaveForLater: {
-                                onSaveItemForLater(item)
-                            } isSavedForLater: {
-                                isItemSavedForLater(item)
-                            }
-                        }
+                    VStack(alignment: .leading, spacing: 10) {
+                        digestOrganizationControl
+                        digestItemsView(for: digest)
 
                         PlainNewsDonePanel(onClear: onClearDigest)
                     }
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 } else if digest != nil {
                     VStack(spacing: 10) {
                         PlainNewsEmptyPanel(title: "Nothing surfaced", systemName: "checkmark.circle")
@@ -347,6 +362,93 @@ struct PlainNewsView: View {
             .padding(.bottom, 56)
             .frame(maxWidth: .infinity, alignment: .center)
         }
+    }
+
+    private var digestOrganizationControl: some View {
+        HStack(alignment: .center) {
+            Label("Organize", systemImage: "arrow.up.arrow.down")
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.secondary)
+
+            Spacer(minLength: 12)
+
+            Picker("Organize", selection: $digestOrganization) {
+                ForEach(PlainNewsDigestOrganization.allCases, id: \.self) { organization in
+                    Text(organization.label).tag(organization)
+                }
+            }
+            .pickerStyle(.segmented)
+            .labelsHidden()
+            .fixedSize()
+        }
+        .frame(maxWidth: .infinity, minHeight: 32, alignment: .trailing)
+    }
+
+    @ViewBuilder
+    private func digestItemsView(for digest: PlainNewsDigest) -> some View {
+        switch digestOrganization {
+        case .time:
+            ForEach(timeOrderedDigestItems(digest.items)) { item in
+                digestRow(for: item)
+            }
+        case .source:
+            VStack(spacing: 22) {
+                ForEach(sourceGroups(from: digest.items)) { group in
+                    PlainNewsDigestSourceGroupView(group: group) { item in
+                        onOpenItem(item)
+                    } onSaveForLater: { item in
+                        onSaveItemForLater(item)
+                    } isSavedForLater: { item in
+                        isItemSavedForLater(item)
+                    }
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+    }
+
+    private func digestRow(for item: PlainNewsDigestItem) -> some View {
+        PlainNewsDigestRow(item: item) {
+            onOpenItem(item)
+        } onSaveForLater: {
+            onSaveItemForLater(item)
+        } isSavedForLater: {
+            isItemSavedForLater(item)
+        }
+    }
+
+    private func timeOrderedDigestItems(_ items: [PlainNewsDigestItem]) -> [PlainNewsDigestItem] {
+        items.sorted { left, right in
+            articleDate(for: left) > articleDate(for: right)
+        }
+    }
+
+    private func sourceGroups(from items: [PlainNewsDigestItem]) -> [PlainNewsDigestSourceGroup] {
+        Dictionary(grouping: items) { item in
+            item.article.sourceID
+        }
+        .map { sourceID, values in
+            let sortedItems = timeOrderedDigestItems(values)
+            return PlainNewsDigestSourceGroup(
+                id: sourceID,
+                sourceName: sortedItems.first?.article.sourceName ?? "Source",
+                items: sortedItems
+            )
+        }
+        .sorted { left, right in
+            let comparison = left.sourceName.localizedStandardCompare(right.sourceName)
+            if comparison == .orderedSame {
+                return articleDate(for: left.items.first) > articleDate(for: right.items.first)
+            }
+            return comparison == .orderedAscending
+        }
+    }
+
+    private func articleDate(for item: PlainNewsDigestItem?) -> Date {
+        guard let item else {
+            return .distantPast
+        }
+        return item.article.publishedAt ?? item.article.observedAt
     }
 
     private var timeWindowPanel: some View {
@@ -826,8 +928,48 @@ struct PlainNewsPresetRow: View {
     }
 }
 
+private struct PlainNewsDigestSourceGroupView: View {
+    var group: PlainNewsDigestSourceGroup
+    var onOpen: (PlainNewsDigestItem) -> Void
+    var onSaveForLater: (PlainNewsDigestItem) -> Void
+    var isSavedForLater: (PlainNewsDigestItem) -> Bool
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 9) {
+            HStack(alignment: .firstTextBaseline, spacing: 8) {
+                Label(group.sourceName, systemImage: "tray.full")
+                    .font(.subheadline.weight(.bold))
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+
+                Text("\(group.items.count)")
+                    .font(.caption.monospacedDigit().weight(.semibold))
+                    .foregroundStyle(.tertiary)
+
+                Spacer()
+            }
+            .padding(.horizontal, 2)
+
+            VStack(spacing: 8) {
+                ForEach(group.items) { item in
+                    PlainNewsDigestRow(item: item, showsSourceName: false) {
+                        onOpen(item)
+                    } onSaveForLater: {
+                        onSaveForLater(item)
+                    } isSavedForLater: {
+                        isSavedForLater(item)
+                    }
+                }
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.top, 4)
+    }
+}
+
 struct PlainNewsDigestRow: View {
     var item: PlainNewsDigestItem
+    var showsSourceName = true
     var onOpen: () -> Void
     var onSaveForLater: () -> Void
     var isSavedForLater: () -> Bool
@@ -838,10 +980,12 @@ struct PlainNewsDigestRow: View {
         HStack(alignment: .top, spacing: 13) {
             VStack(alignment: .leading, spacing: 7) {
                 HStack(spacing: 8) {
-                    Text(item.article.sourceName)
-                        .font(.caption.weight(.bold))
-                        .foregroundStyle(.secondary)
-                        .lineLimit(1)
+                    if showsSourceName {
+                        Text(item.article.sourceName)
+                            .font(.caption.weight(.bold))
+                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
+                    }
 
                     if let publishedAt = item.article.publishedAt {
                         Text(publishedAt.formatted(date: .abbreviated, time: .shortened))
@@ -849,24 +993,27 @@ struct PlainNewsDigestRow: View {
                             .foregroundStyle(.tertiary)
                             .lineLimit(1)
                     }
+
+                    PlainNewsSelectionScoreView(item: item)
                 }
 
-                Text(item.article.title)
-                    .font(.headline)
-                    .foregroundStyle(.primary)
-                    .lineLimit(2)
+                VStack(alignment: .leading, spacing: 7) {
+                    Text(item.article.title)
+                        .font(.headline)
+                        .foregroundStyle(.primary)
+                        .lineLimit(2)
 
-                Text(item.assessment.summary)
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(3)
-
+                    Text(item.assessment.summary)
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(3)
+                }
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    onOpen()
+                }
+                .pointingHandCursor()
             }
-            .contentShape(Rectangle())
-            .onTapGesture {
-                onOpen()
-            }
-            .pointingHandCursor()
 
             Spacer(minLength: 8)
 
@@ -912,6 +1059,88 @@ struct PlainNewsDigestRow: View {
         }
         .shadow(color: .black.opacity(isHovering ? 0.06 : 0), radius: 10, y: 4)
         .onHover { isHovering = $0 }
+    }
+}
+
+private struct PlainNewsSelectionScoreView: View {
+    var item: PlainNewsDigestItem
+
+    @State private var showsDetails = false
+
+    var body: some View {
+        Button {
+            showsDetails.toggle()
+        } label: {
+            Label("\(item.assessment.relevance)/5", systemImage: "info.circle")
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.secondary)
+                .labelStyle(.titleAndIcon)
+                .padding(.horizontal, 6)
+                .padding(.vertical, 3)
+                .background(Color(nsColor: .textBackgroundColor).opacity(0.82), in: RoundedRectangle(cornerRadius: 6))
+        }
+        .buttonStyle(.plain)
+        .help("Selection details")
+        .popover(isPresented: $showsDetails, arrowEdge: .bottom) {
+            selectionDetailsPanel
+                .frame(width: 300, alignment: .leading)
+        }
+        .onHover { isHovering in
+            if isHovering {
+                showsDetails = true
+            }
+        }
+    }
+
+    private var selectionDetailsPanel: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(alignment: .center) {
+                Text("Selection details")
+                    .font(.headline)
+
+                Spacer()
+
+                Button {
+                    showsDetails = false
+                } label: {
+                    Image(systemName: "xmark")
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(.secondary)
+                        .frame(width: 24, height: 24)
+                }
+                .buttonStyle(.plain)
+                .help("Close")
+            }
+
+            HStack(alignment: .firstTextBaseline) {
+                Text("Relevance")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.secondary)
+                Spacer()
+                Text("\(item.assessment.relevance)/5")
+                    .font(.caption.monospacedDigit().weight(.bold))
+                    .foregroundStyle(.primary)
+            }
+
+            Text(item.assessment.reason)
+                .font(.callout)
+                .foregroundStyle(.primary)
+                .fixedSize(horizontal: false, vertical: true)
+
+            if !item.assessment.topics.isEmpty {
+                HStack(spacing: 5) {
+                    ForEach(Array(item.assessment.topics.prefix(5)), id: \.self) { topic in
+                        Text("#\(topic)")
+                            .font(.caption2.weight(.semibold))
+                            .foregroundStyle(.secondary)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 3)
+                            .background(Color(nsColor: .controlBackgroundColor), in: RoundedRectangle(cornerRadius: 5))
+                    }
+                }
+            }
+        }
+        .padding(12)
     }
 }
 
@@ -968,9 +1197,6 @@ struct PlainNewsDonePanel: View {
             VStack(alignment: .leading, spacing: 3) {
                 Text("You're all done with the news.")
                     .font(.subheadline.weight(.semibold))
-                Text("Clear this digest when you want a clean view.")
-                    .font(.caption.weight(.medium))
-                    .foregroundStyle(.secondary)
             }
 
             Spacer()
@@ -978,7 +1204,7 @@ struct PlainNewsDonePanel: View {
             Button {
                 onClear()
             } label: {
-                Label("Clear", systemImage: "xmark")
+                Label("Start over", systemImage: "arrow.clockwise")
             }
             .buttonStyle(.bordered)
         }

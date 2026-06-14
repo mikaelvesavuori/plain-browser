@@ -30,8 +30,8 @@ make package-fast
 Publish a versioned GitHub Release with:
 
 ```sh
-git tag v1.1.4
-git push origin v1.1.4
+git tag v1.1.5
+git push origin v1.1.5
 ```
 
 The release workflow builds the app on macOS, derives `CFBundleShortVersionString` and artifact names from the tag, and uploads the `.dmg`, `.zip`, and `SHA256SUMS.txt` as release assets.
@@ -54,6 +54,21 @@ Plain performs a lightweight startup check against the repository's latest GitHu
 
 Plain does not include automatic downloads or in-app installation. Users update manually from GitHub Releases.
 
+## Developer ID and Notarization Path
+
+Current public builds are ad-hoc signed. To reduce first-open friction for broader distribution, Plain should move to Developer ID signing and Apple notarization when an Apple Developer Program account is available.
+
+The release path should add:
+
+- `Developer ID Application` signing for `Plain.app`
+- hardened runtime options compatible with the current App Sandbox and network-client entitlement
+- `notarytool submit` for the ZIP or DMG artifact
+- stapling for the notarized app or DMG
+- CI secrets for the Apple team ID, signing certificate, and notarization credentials
+- a release smoke check that verifies Gatekeeper assessment before upload
+
+This does not change Plain's product privacy model. It changes macOS trust and install behavior for downloaded builds.
+
 ## Current Release Includes
 
 - native SwiftUI macOS app bundle
@@ -65,9 +80,11 @@ Plain does not include automatic downloads or in-app installation. Users update 
 - back/forward navigation
 - swipe back/forward navigation
 - recent pages
-- Later list and Markdown export
+- Later list with search, tags, Markdown import/export, and reading progress
 - adjacent Later item navigation with toolbar buttons and left/right arrow keys while reading from Later
-- Plain News source library, custom sources, local digest generation, and save-to-Later support
+- Quotes with search, notes, tags, source links, copy, and Markdown export
+- reader read-time estimate and progress line
+- Plain News source library, custom sources, local digest generation, source/time organization, compact selection details, and save-to-Later support
 - find in page
 - reader text scaling and serif/sans font switching
 - light/dark/system appearance controls

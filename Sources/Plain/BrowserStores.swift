@@ -19,6 +19,70 @@ struct LaterItem: Codable, Equatable, Identifiable {
     var url: URL
     var title: String?
     var addedAt: Date
+    var tags: [String]
+    var readingProgress: Double
+    var lastReadAt: Date?
+
+    init(
+        url: URL,
+        title: String? = nil,
+        addedAt: Date = Date(),
+        tags: [String] = [],
+        readingProgress: Double = 0,
+        lastReadAt: Date? = nil
+    ) {
+        self.url = url
+        self.title = title
+        self.addedAt = addedAt
+        self.tags = QuoteItem.normalizedTags(tags)
+        self.readingProgress = Self.clampedProgress(readingProgress)
+        self.lastReadAt = lastReadAt
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case url
+        case title
+        case addedAt
+        case tags
+        case readingProgress
+        case lastReadAt
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        url = try container.decode(URL.self, forKey: .url)
+        title = try container.decodeIfPresent(String.self, forKey: .title)
+        addedAt = try container.decode(Date.self, forKey: .addedAt)
+        tags = QuoteItem.normalizedTags(try container.decodeIfPresent([String].self, forKey: .tags) ?? [])
+        readingProgress = Self.clampedProgress(try container.decodeIfPresent(Double.self, forKey: .readingProgress) ?? 0)
+        lastReadAt = try container.decodeIfPresent(Date.self, forKey: .lastReadAt)
+    }
+
+    func withTags(_ tags: [String]) -> LaterItem {
+        LaterItem(
+            url: url,
+            title: title,
+            addedAt: addedAt,
+            tags: tags,
+            readingProgress: readingProgress,
+            lastReadAt: lastReadAt
+        )
+    }
+
+    func withReadingProgress(_ progress: Double, readAt: Date = Date()) -> LaterItem {
+        LaterItem(
+            url: url,
+            title: title,
+            addedAt: addedAt,
+            tags: tags,
+            readingProgress: progress,
+            lastReadAt: readAt
+        )
+    }
+
+    static func clampedProgress(_ value: Double) -> Double {
+        min(1, max(0, value))
+    }
 }
 
 struct QuoteItem: Codable, Equatable, Identifiable {
@@ -28,6 +92,8 @@ struct QuoteItem: Codable, Equatable, Identifiable {
     var sourceTitle: String?
     var siteName: String?
     var savedAt: Date
+    var note: String?
+    var tags: [String]
 
     init(
         id: UUID = UUID(),
@@ -35,7 +101,9 @@ struct QuoteItem: Codable, Equatable, Identifiable {
         sourceURL: URL,
         sourceTitle: String? = nil,
         siteName: String? = nil,
-        savedAt: Date = Date()
+        savedAt: Date = Date(),
+        note: String? = nil,
+        tags: [String] = []
     ) {
         self.id = id
         self.text = text
@@ -43,6 +111,63 @@ struct QuoteItem: Codable, Equatable, Identifiable {
         self.sourceTitle = sourceTitle
         self.siteName = siteName
         self.savedAt = savedAt
+        self.note = note?.trimmingCharacters(in: .whitespacesAndNewlines).nilIfEmpty
+        self.tags = Self.normalizedTags(tags)
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case id
+        case text
+        case sourceURL
+        case sourceTitle
+        case siteName
+        case savedAt
+        case note
+        case tags
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(UUID.self, forKey: .id)
+        text = try container.decode(String.self, forKey: .text)
+        sourceURL = try container.decode(URL.self, forKey: .sourceURL)
+        sourceTitle = try container.decodeIfPresent(String.self, forKey: .sourceTitle)
+        siteName = try container.decodeIfPresent(String.self, forKey: .siteName)
+        savedAt = try container.decode(Date.self, forKey: .savedAt)
+        note = try container.decodeIfPresent(String.self, forKey: .note)?.trimmingCharacters(in: .whitespacesAndNewlines).nilIfEmpty
+        tags = Self.normalizedTags(try container.decodeIfPresent([String].self, forKey: .tags) ?? [])
+    }
+
+    func withMetadata(note: String?, tags: [String]) -> QuoteItem {
+        QuoteItem(
+            id: id,
+            text: text,
+            sourceURL: sourceURL,
+            sourceTitle: sourceTitle,
+            siteName: siteName,
+            savedAt: savedAt,
+            note: note,
+            tags: tags
+        )
+    }
+
+    static func normalizedTags(_ values: [String]) -> [String] {
+        var seen = Set<String>()
+        return values
+            .flatMap { value in
+                value.components(separatedBy: CharacterSet(charactersIn: ",#\n"))
+            }
+            .map { value in
+                value.trimmingCharacters(in: .whitespacesAndNewlines)
+                    .lowercased()
+            }
+            .filter { value in
+                guard !value.isEmpty, !seen.contains(value) else {
+                    return false
+                }
+                seen.insert(value)
+                return true
+            }
     }
 }
 
@@ -215,5 +340,12 @@ struct PlainNewsStore {
 
     private func clampedResultLimit(_ value: Int) -> Int {
         min(60, max(6, value))
+    }
+}
+
+private extension String {
+    var nilIfEmpty: String? {
+        let trimmed = trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? nil : trimmed
     }
 }

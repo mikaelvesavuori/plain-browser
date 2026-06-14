@@ -35,6 +35,7 @@ struct PlainCommandActions {
     var showNews: () -> Void
     var showQuotes: () -> Void
     var exportLater: () -> Void
+    var importLater: () -> Void
     var copyCleanText: () -> Void
     var copyMarkdown: () -> Void
 }
@@ -117,6 +118,7 @@ struct PlainCommands: Commands {
             Button("Show Quotes") {
                 actions?.showQuotes()
             }
+            .keyboardShortcut("q", modifiers: [.command, .option])
             .disabled(actions?.canShowQuotes != true)
 
             Button("Show Plain News") {
@@ -128,6 +130,11 @@ struct PlainCommands: Commands {
                 actions?.exportLater()
             }
             .disabled(actions?.canExportLater != true)
+
+            Button("Import Later") {
+                actions?.importLater()
+            }
+            .disabled(actions == nil)
         }
 
         CommandMenu("Reader") {

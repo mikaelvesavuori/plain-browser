@@ -11,12 +11,16 @@ struct StartView: View {
     var onOpen: (HistoryItem) -> Void
     var onOpenLater: (LaterItem) -> Void
     var onRemoveLater: (LaterItem) -> Void
+    var onUpdateLaterTags: (LaterItem, [String]) -> Void
     var onExportLater: () -> Void
+    var onImportLater: () -> Void
     var onClearLater: () -> Void
     var onShowNews: () -> Void
     var onShowQuotes: () -> Void
     var onClear: () -> Void
     var onDismissWelcome: () -> Void
+
+    @State private var laterSearchText = ""
 
     var body: some View {
         ScrollView {
@@ -75,6 +79,10 @@ struct StartView: View {
             HStack {
                 SectionHeading(title: "Later", subtitle: "\(laterItems.count) saved")
                 Spacer()
+                Button("Import") {
+                    onImportLater()
+                }
+                .buttonStyle(.link)
                 Button("Export") {
                     onExportLater()
                 }
@@ -85,15 +93,38 @@ struct StartView: View {
                 .buttonStyle(.link)
             }
 
-            VStack(spacing: 8) {
-                ForEach(laterItems) { item in
-                    LaterPageRow(item: item) {
-                        onOpenLater(item)
-                    } onRemove: {
-                        onRemoveLater(item)
+            LibrarySearchField(placeholder: "Search Later by title, URL, or tag", text: $laterSearchText)
+
+            if filteredLaterItems.isEmpty {
+                EmptyFilteredLibraryView(
+                    title: "No matching Later items",
+                    systemName: "line.3.horizontal.decrease.circle",
+                    message: "Try another title, domain, or tag."
+                )
+            } else {
+                VStack(spacing: 8) {
+                    ForEach(filteredLaterItems) { item in
+                        LaterPageRow(item: item) {
+                            onOpenLater(item)
+                        } onRemove: {
+                            onRemoveLater(item)
+                        } onUpdateTags: { tags in
+                            onUpdateLaterTags(item, tags)
+                        }
                     }
                 }
             }
+        }
+    }
+
+    private var filteredLaterItems: [LaterItem] {
+        let query = laterSearchText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !query.isEmpty else {
+            return laterItems
+        }
+
+        return laterItems.filter { item in
+            item.matchesSearch(query)
         }
     }
 
@@ -232,8 +263,11 @@ struct QuotesLibraryView: View {
     var onOpenQuoteSource: (QuoteItem) -> Void
     var onCopyQuote: (QuoteItem) -> Void
     var onRemoveQuote: (QuoteItem) -> Void
+    var onUpdateQuoteMetadata: (QuoteItem, String?, [String]) -> Void
     var onExportQuotes: () -> Void
     var onClearQuotes: () -> Void
+
+    @State private var searchText = ""
 
     var body: some View {
         ScrollView {
@@ -265,14 +299,29 @@ struct QuotesLibraryView: View {
                 if quoteItems.isEmpty {
                     EmptyQuotesLibraryView()
                 } else {
-                    VStack(spacing: 16) {
-                        ForEach(sortedQuoteItems) { item in
-                            QuoteReadingCard(item: item) {
-                                onOpenQuoteSource(item)
-                            } onCopy: {
-                                onCopyQuote(item)
-                            } onRemove: {
-                                onRemoveQuote(item)
+                    LibrarySearchField(
+                        placeholder: "Search quotes, notes, tags, or sources",
+                        text: $searchText
+                    )
+
+                    if filteredQuoteItems.isEmpty {
+                        EmptyFilteredLibraryView(
+                            title: "No matching quotes",
+                            systemName: "line.3.horizontal.decrease.circle",
+                            message: "Try another word, source, note, or tag."
+                        )
+                    } else {
+                        VStack(spacing: 16) {
+                            ForEach(filteredQuoteItems) { item in
+                                QuoteReadingCard(item: item) {
+                                    onOpenQuoteSource(item)
+                                } onCopy: {
+                                    onCopyQuote(item)
+                                } onRemove: {
+                                    onRemoveQuote(item)
+                                } onUpdateMetadata: { note, tags in
+                                    onUpdateQuoteMetadata(item, note, tags)
+                                }
                             }
                         }
                     }
@@ -298,8 +347,86 @@ struct QuotesLibraryView: View {
         quoteItems.sorted { $0.savedAt > $1.savedAt }
     }
 
+    private var filteredQuoteItems: [QuoteItem] {
+        let query = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !query.isEmpty else {
+            return sortedQuoteItems
+        }
+
+        return sortedQuoteItems.filter { item in
+            item.matchesSearch(query)
+        }
+    }
+
     private var sourceCount: Int {
         Set(quoteItems.map(\.sourceURL)).count
+    }
+}
+
+struct LibrarySearchField: View {
+    var placeholder: String
+    @Binding var text: String
+
+    var body: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "magnifyingglass")
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundStyle(.secondary)
+
+            TextField(placeholder, text: $text)
+                .textFieldStyle(.plain)
+                .font(.subheadline.weight(.medium))
+
+            if !text.isEmpty {
+                Button {
+                    text = ""
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.system(size: 12, weight: .semibold))
+                }
+                .buttonStyle(.plain)
+                .foregroundStyle(.tertiary)
+                .help("Clear Search")
+            }
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 9)
+        .background(Color(nsColor: .controlBackgroundColor).opacity(0.72), in: RoundedRectangle(cornerRadius: 8))
+        .overlay {
+            RoundedRectangle(cornerRadius: 8)
+                .stroke(Color(nsColor: .separatorColor).opacity(0.38), lineWidth: 1)
+        }
+    }
+}
+
+struct EmptyFilteredLibraryView: View {
+    var title: String
+    var systemName: String
+    var message: String
+
+    var body: some View {
+        HStack(spacing: 12) {
+            Image(systemName: systemName)
+                .font(.system(size: 19, weight: .semibold))
+                .foregroundStyle(.secondary)
+                .frame(width: 36, height: 36)
+                .background(Color(nsColor: .controlBackgroundColor), in: RoundedRectangle(cornerRadius: 8))
+
+            VStack(alignment: .leading, spacing: 3) {
+                Text(title)
+                    .font(.headline)
+                Text(message)
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 8))
+        .overlay {
+            RoundedRectangle(cornerRadius: 8)
+                .stroke(Color(nsColor: .separatorColor).opacity(0.35), lineWidth: 1)
+        }
     }
 }
 
@@ -542,63 +669,83 @@ struct LaterPageRow: View {
     var item: LaterItem
     var onOpen: () -> Void
     var onRemove: () -> Void
+    var onUpdateTags: ([String]) -> Void = { _ in }
 
     @State private var isHovering = false
+    @State private var tagsText = ""
 
     var body: some View {
-        HStack(spacing: 8) {
-            Button {
-                onOpen()
-            } label: {
-                HStack(spacing: 12) {
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 7)
-                            .fill(Color.accentColor.opacity(0.1))
-                        Image(systemName: "bookmark")
-                            .font(.system(size: 15, weight: .semibold))
-                            .foregroundStyle(.tint)
-                    }
-                    .frame(width: 36, height: 36)
-
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(item.title ?? item.url.absoluteString)
-                            .foregroundStyle(.primary)
-                            .lineLimit(1)
-                        HStack(spacing: 8) {
-                            Text(item.url.host(percentEncoded: false) ?? item.url.absoluteString)
-                                .lineLimit(1)
-                            Text(item.addedAt.formatted(date: .abbreviated, time: .shortened))
-                                .lineLimit(1)
+        VStack(spacing: 0) {
+            HStack(spacing: 8) {
+                Button {
+                    onOpen()
+                } label: {
+                    HStack(spacing: 12) {
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 7)
+                                .fill(Color.accentColor.opacity(0.1))
+                            Image(systemName: "bookmark")
+                                .font(.system(size: 15, weight: .semibold))
+                                .foregroundStyle(.tint)
                         }
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .frame(width: 36, height: 36)
+
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(item.title ?? item.url.absoluteString)
+                                .foregroundStyle(.primary)
+                                .lineLimit(1)
+                            HStack(spacing: 8) {
+                                Text(item.url.host(percentEncoded: false) ?? item.url.absoluteString)
+                                    .lineLimit(1)
+                                Text(item.addedAt.formatted(date: .abbreviated, time: .shortened))
+                                    .lineLimit(1)
+                                if let lastReadAt = item.lastReadAt {
+                                    Text("read \(lastReadAt.formatted(date: .abbreviated, time: .omitted))")
+                                        .lineLimit(1)
+                                }
+                            }
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        }
+
+                        Spacer()
+
+                        Image(systemName: "arrow.up.right")
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(.tertiary)
                     }
-
-                    Spacer()
-
-                    Image(systemName: "arrow.up.right")
-                        .font(.caption.weight(.semibold))
-                        .foregroundStyle(.tertiary)
+                    .padding(.leading, 12)
+                    .padding(.top, 12)
+                    .padding(.bottom, 9)
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
-                .padding(.leading, 12)
-                .padding(.vertical, 12)
-                .frame(maxWidth: .infinity, alignment: .leading)
-            }
-            .buttonStyle(.plain)
-            .pointingHandCursor()
+                .buttonStyle(.plain)
+                .pointingHandCursor()
 
-            Button {
-                onRemove()
-            } label: {
-                Image(systemName: "xmark")
-                    .font(.system(size: 11, weight: .bold))
-                    .foregroundStyle(.secondary)
-                    .frame(width: 28, height: 28)
+                Button {
+                    onRemove()
+                } label: {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 11, weight: .bold))
+                        .foregroundStyle(.secondary)
+                        .frame(width: 28, height: 28)
+                }
+                .buttonStyle(.plain)
+                .help("Remove from Later")
+                .hoverIconButton(size: 28, cornerRadius: 7, isDestructive: true)
+                .padding(.trailing, 8)
             }
-            .buttonStyle(.plain)
-            .help("Remove from Later")
-            .hoverIconButton(size: 28, cornerRadius: 7, isDestructive: true)
-            .padding(.trailing, 8)
+
+            VStack(alignment: .leading, spacing: 8) {
+                LaterProgressBar(progress: item.readingProgress)
+
+                LibraryTagEditor(tags: item.tags, text: $tagsText) {
+                    onUpdateTags(QuoteItem.normalizedTags([tagsText]))
+                }
+            }
+            .padding(.leading, 60)
+            .padding(.trailing, 12)
+            .padding(.bottom, 10)
         }
         .background(rowBackground, in: RoundedRectangle(cornerRadius: 8))
         .overlay {
@@ -607,6 +754,12 @@ struct LaterPageRow: View {
         }
         .shadow(color: .black.opacity(isHovering ? 0.06 : 0), radius: 10, y: 4)
         .onHover { isHovering = $0 }
+        .onAppear {
+            tagsText = item.tags.joined(separator: ", ")
+        }
+        .onChange(of: item.tags) { _, tags in
+            tagsText = tags.joined(separator: ", ")
+        }
     }
 
     private var rowBackground: Color {
@@ -681,13 +834,146 @@ struct QuoteSourceGroupView: View {
     }
 }
 
+struct LaterProgressBar: View {
+    var progress: Double
+
+    var body: some View {
+        GeometryReader { proxy in
+            ZStack(alignment: .leading) {
+                RoundedRectangle(cornerRadius: 2)
+                    .fill(Color(nsColor: .separatorColor).opacity(0.32))
+                RoundedRectangle(cornerRadius: 2)
+                    .fill(Color.accentColor.opacity(0.55))
+                    .frame(width: max(0, proxy.size.width * LaterItem.clampedProgress(progress)))
+            }
+        }
+        .frame(height: 4)
+        .accessibilityLabel("Reading progress \(Int(LaterItem.clampedProgress(progress) * 100)) percent")
+    }
+}
+
+struct LibraryTagEditor: View {
+    var tags: [String]
+    @Binding var text: String
+    var onSave: () -> Void
+
+    @State private var isEditing = false
+
+    var body: some View {
+        Group {
+            if isEditing {
+                editRow
+            } else {
+                displayRow
+            }
+        }
+    }
+
+    private var displayRow: some View {
+        HStack(spacing: 8) {
+            if tags.isEmpty {
+                Button {
+                    isEditing = true
+                } label: {
+                    Label("Add tags", systemImage: "tag")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.secondary)
+                }
+                .buttonStyle(.plain)
+                .pointingHandCursor()
+            } else {
+                QuoteTagChips(tags: tags)
+            }
+
+            Spacer(minLength: 8)
+
+            Button {
+                isEditing = true
+            } label: {
+                Image(systemName: tags.isEmpty ? "plus" : "pencil")
+                    .font(.caption.weight(.bold))
+            }
+            .buttonStyle(.plain)
+            .help(tags.isEmpty ? "Add Tags" : "Edit Tags")
+            .hoverIconButton(size: 24, cornerRadius: 6)
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 6)
+        .background(Color(nsColor: .textBackgroundColor).opacity(0.62), in: RoundedRectangle(cornerRadius: 7))
+    }
+
+    private var editRow: some View {
+        HStack(spacing: 8) {
+            TextField("Tags, comma separated", text: $text)
+                .textFieldStyle(.plain)
+                .font(.caption.weight(.medium))
+                .onSubmit {
+                    save()
+                }
+
+            Button {
+                save()
+            } label: {
+                Image(systemName: "checkmark")
+                    .font(.caption.weight(.bold))
+            }
+            .buttonStyle(.plain)
+            .help("Save Tags")
+            .hoverIconButton(size: 24, cornerRadius: 6)
+
+            Button {
+                text = tags.joined(separator: ", ")
+                isEditing = false
+            } label: {
+                Image(systemName: "xmark")
+                    .font(.caption.weight(.bold))
+            }
+            .buttonStyle(.plain)
+            .help("Cancel")
+            .hoverIconButton(size: 24, cornerRadius: 6)
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 6)
+        .background(Color(nsColor: .textBackgroundColor).opacity(0.62), in: RoundedRectangle(cornerRadius: 7))
+    }
+
+    private func save() {
+        onSave()
+        isEditing = false
+    }
+}
+
+private extension LaterItem {
+    func matchesSearch(_ query: String) -> Bool {
+        let normalizedQuery = query.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        guard !normalizedQuery.isEmpty else {
+            return true
+        }
+
+        let haystack = [
+            title ?? "",
+            url.absoluteString,
+            url.host(percentEncoded: false) ?? "",
+            tags.joined(separator: " ")
+        ]
+            .joined(separator: " ")
+            .lowercased()
+
+        return haystack.contains(normalizedQuery)
+    }
+}
+
 struct QuoteReadingCard: View {
     var item: QuoteItem
     var onOpenSource: () -> Void
     var onCopy: () -> Void
     var onRemove: () -> Void
+    var onUpdateMetadata: (String?, [String]) -> Void = { _, _ in }
 
     @State private var isHovering = false
+    @State private var isMetadataExpanded = false
+    @State private var noteText = ""
+    @State private var tagsText = ""
 
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
@@ -721,6 +1007,44 @@ struct QuoteReadingCard: View {
 
             Divider()
                 .opacity(0.45)
+
+            LibraryTagEditor(tags: item.tags, text: $tagsText) {
+                saveTags()
+            }
+
+            DisclosureGroup(isExpanded: $isMetadataExpanded) {
+                VStack(alignment: .leading, spacing: 8) {
+                    TextEditor(text: $noteText)
+                        .font(.system(size: 13))
+                        .scrollContentBackground(.hidden)
+                        .frame(minHeight: 58, maxHeight: 82)
+                        .padding(7)
+                        .background(Color(nsColor: .controlBackgroundColor).opacity(0.64), in: RoundedRectangle(cornerRadius: 8))
+                        .overlay {
+                            RoundedRectangle(cornerRadius: 8)
+                                .stroke(Color(nsColor: .separatorColor).opacity(0.34), lineWidth: 1)
+                        }
+
+                    HStack {
+                        Spacer()
+
+                        Button {
+                            saveNote()
+                        } label: {
+                            Label("Save note", systemImage: "checkmark")
+                                .font(.caption.weight(.semibold))
+                        }
+                        .buttonStyle(.bordered)
+                        .controlSize(.small)
+                        .help("Save Note")
+                    }
+                }
+                .padding(.top, 8)
+            } label: {
+                Label(noteLabel, systemImage: "note.text")
+                    .font(.caption.weight(.semibold))
+                .foregroundStyle(.secondary)
+            }
 
             HStack(alignment: .center, spacing: 12) {
                 VStack(alignment: .leading, spacing: 3) {
@@ -789,6 +1113,18 @@ struct QuoteReadingCard: View {
                 .stroke(Color(nsColor: .separatorColor).opacity(isHovering ? 0.46 : 0.24), lineWidth: 1)
         }
         .onHover { isHovering = $0 }
+        .onAppear {
+            syncMetadataFields()
+        }
+        .onChange(of: item.id) { _, _ in
+            syncMetadataFields()
+        }
+        .onChange(of: item.note) { _, note in
+            noteText = note ?? ""
+        }
+        .onChange(of: item.tags) { _, tags in
+            tagsText = tags.joined(separator: ", ")
+        }
     }
 
     private var paragraphs: [String] {
@@ -807,14 +1143,88 @@ struct QuoteReadingCard: View {
     private func displayText(for paragraph: String, at index: Int) -> String {
         index == paragraphs.count - 1 ? "\(paragraph)”" : paragraph
     }
+
+    private var hasNote: Bool {
+        item.note?.isEmpty == false
+    }
+
+    private var noteLabel: String {
+        if hasNote {
+            return "Note"
+        }
+        return "Add note"
+    }
+
+    private func syncMetadataFields() {
+        noteText = item.note ?? ""
+        tagsText = item.tags.joined(separator: ", ")
+    }
+
+    private func saveNote() {
+        let note = noteText.trimmingCharacters(in: .whitespacesAndNewlines)
+        onUpdateMetadata(note.isEmpty ? nil : note, item.tags)
+    }
+
+    private func saveTags() {
+        onUpdateMetadata(item.note, QuoteItem.normalizedTags([tagsText]))
+    }
+}
+
+struct QuoteTagChips: View {
+    var tags: [String]
+
+    var body: some View {
+        HStack(spacing: 5) {
+            ForEach(Array(tags.prefix(4)), id: \.self) { tag in
+                Text("#\(tag)")
+                    .font(.caption2.weight(.semibold))
+                    .foregroundStyle(.secondary)
+                    .padding(.horizontal, 5)
+                    .padding(.vertical, 2)
+                    .background(Color(nsColor: .controlBackgroundColor).opacity(0.82), in: RoundedRectangle(cornerRadius: 5))
+            }
+
+            if tags.count > 4 {
+                Text("+\(tags.count - 4)")
+                    .font(.caption2.weight(.semibold))
+                    .foregroundStyle(.tertiary)
+            }
+        }
+    }
+}
+
+private extension QuoteItem {
+    func matchesSearch(_ query: String) -> Bool {
+        let normalizedQuery = query.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        guard !normalizedQuery.isEmpty else {
+            return true
+        }
+
+        let haystack = [
+            text,
+            sourceTitle ?? "",
+            siteName ?? "",
+            sourceURL.absoluteString,
+            note ?? "",
+            tags.joined(separator: " ")
+        ]
+            .joined(separator: " ")
+            .lowercased()
+
+        return haystack.contains(normalizedQuery)
+    }
 }
 
 struct LaterPopoverPanel: View {
     var items: [LaterItem]
     var onOpen: (LaterItem) -> Void
     var onRemove: (LaterItem) -> Void
+    var onUpdateTags: (LaterItem, [String]) -> Void
     var onExport: () -> Void
+    var onImport: () -> Void
     var onClear: () -> Void
+
+    @State private var searchText = ""
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -822,12 +1232,17 @@ struct LaterPopoverPanel: View {
                 VStack(alignment: .leading, spacing: 2) {
                     Label("Later", systemImage: "list.bullet")
                         .font(.headline)
-                    Text("Choose a saved page to open it.")
+                    Text("Choose, tag, or import saved pages.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
 
                 Spacer()
+
+                Button("Import") {
+                    onImport()
+                }
+                .buttonStyle(.link)
 
                 Button("Export") {
                     onExport()
@@ -843,6 +1258,10 @@ struct LaterPopoverPanel: View {
             }
 
             Divider()
+
+            if !items.isEmpty {
+                LibrarySearchField(placeholder: "Search Later", text: $searchText)
+            }
 
             if items.isEmpty {
                 VStack(alignment: .leading, spacing: 8) {
@@ -863,14 +1282,22 @@ struct LaterPopoverPanel: View {
                     RoundedRectangle(cornerRadius: 8)
                         .stroke(Color(nsColor: .separatorColor).opacity(0.35), lineWidth: 1)
                 }
+            } else if filteredItems.isEmpty {
+                EmptyFilteredLibraryView(
+                    title: "No matching items",
+                    systemName: "line.3.horizontal.decrease.circle",
+                    message: "Try another title, domain, or tag."
+                )
             } else {
                 ScrollView {
                     VStack(spacing: 8) {
-                        ForEach(items) { item in
+                        ForEach(filteredItems) { item in
                             LaterPopoverRow(item: item) {
                                 onOpen(item)
                             } onRemove: {
                                 onRemove(item)
+                            } onUpdateTags: { tags in
+                                onUpdateTags(item, tags)
                             }
                         }
                     }
@@ -882,51 +1309,72 @@ struct LaterPopoverPanel: View {
         .padding(14)
         .frame(width: 410)
     }
+
+    private var filteredItems: [LaterItem] {
+        let query = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !query.isEmpty else {
+            return items
+        }
+
+        return items.filter { item in
+            item.matchesSearch(query)
+        }
+    }
 }
 
 struct LaterPopoverRow: View {
     var item: LaterItem
     var onOpen: () -> Void
     var onRemove: () -> Void
+    var onUpdateTags: ([String]) -> Void = { _ in }
 
     @State private var isHovering = false
+    @State private var tagsText = ""
 
     var body: some View {
-        HStack(spacing: 8) {
-            Button {
-                onOpen()
-            } label: {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(item.title ?? item.url.absoluteString)
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(.primary)
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 8) {
+                Button {
+                    onOpen()
+                } label: {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(item.title ?? item.url.absoluteString)
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(.primary)
+                            .lineLimit(1)
+
+                        HStack(spacing: 6) {
+                            Text(item.url.host(percentEncoded: false) ?? item.url.absoluteString)
+                            Text(item.addedAt.formatted(date: .abbreviated, time: .shortened))
+                        }
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                         .lineLimit(1)
-
-                    HStack(spacing: 6) {
-                        Text(item.url.host(percentEncoded: false) ?? item.url.absoluteString)
-                        Text(item.addedAt.formatted(date: .abbreviated, time: .shortened))
                     }
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .contentShape(Rectangle())
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-            .pointingHandCursor()
+                .buttonStyle(.plain)
+                .pointingHandCursor()
 
-            Button {
-                onRemove()
-            } label: {
-                Image(systemName: "xmark")
-                    .font(.system(size: 11, weight: .bold))
-                    .foregroundStyle(.secondary)
-                    .frame(width: 26, height: 26)
+                Button {
+                    onRemove()
+                } label: {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 11, weight: .bold))
+                        .foregroundStyle(.secondary)
+                        .frame(width: 26, height: 26)
+                }
+                .buttonStyle(.plain)
+                .help("Remove from Later")
+                .hoverIconButton(size: 26, cornerRadius: 7, isDestructive: true)
             }
-            .buttonStyle(.plain)
-            .help("Remove from Later")
-            .hoverIconButton(size: 26, cornerRadius: 7, isDestructive: true)
+
+            LaterProgressBar(progress: item.readingProgress)
+
+            LibraryTagEditor(tags: item.tags, text: $tagsText) {
+                onUpdateTags(QuoteItem.normalizedTags([tagsText]))
+            }
         }
         .padding(.leading, 11)
         .padding(.trailing, 6)
@@ -940,6 +1388,12 @@ struct LaterPopoverRow: View {
                 .stroke(Color(nsColor: .separatorColor).opacity(isHovering ? 0.58 : 0.36), lineWidth: 1)
         }
         .onHover { isHovering = $0 }
+        .onAppear {
+            tagsText = item.tags.joined(separator: ", ")
+        }
+        .onChange(of: item.tags) { _, tags in
+            tagsText = tags.joined(separator: ", ")
+        }
     }
 }
 

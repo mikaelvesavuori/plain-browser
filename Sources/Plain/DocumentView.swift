@@ -12,10 +12,14 @@ struct DocumentView: View {
     var onOpenExternalLink: (URL) -> Void
     var onSaveImage: (ImageRef) -> Void
     var onSaveQuote: (String) -> Void
+    var onReportIssue: () -> Void
+    var onReadingProgressChange: (Double) -> Void
     var isQuoteSelectionActive: Bool
     var selectedQuoteElementIDs: Set<Int>
     var onSelectQuoteElement: (Int) -> Void
     var onDragSelectQuoteElement: (Int) -> Void
+
+    @State private var readingProgress: Double = 0
 
     private var contentMaxWidth: CGFloat {
         if document.elements.contains(where: \.isSearchResult) {
@@ -26,39 +30,63 @@ struct DocumentView: View {
 
     var body: some View {
         ScrollViewReader { proxy in
-            ScrollView {
-                VStack(alignment: .leading, spacing: 24) {
-                    header
+            GeometryReader { viewportProxy in
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 24) {
+                        header
                         .id(DocumentFindTarget.header)
                         .findTargetHighlight(selectedFindTarget == .header)
 
-                    ForEach(Array(document.elements.enumerated()), id: \.offset) { index, element in
-                        QuoteSelectableElementView(
-                            id: index,
-                            isEnabled: isQuoteSelectionActive && element.quotePlainText != nil,
-                            isSelected: selectedQuoteElementIDs.contains(index),
-                            onSelect: onSelectQuoteElement,
-                            onDragSelect: onDragSelectQuoteElement
-                        ) {
-                            DocumentElementView(
-                                element: element,
-                                showsImages: showsImages,
-                                readerSettings: readerSettings,
-                                onOpenLink: onOpenLink,
-                                onOpenExternalLink: onOpenExternalLink,
-                                onSaveImage: onSaveImage,
-                                onSaveQuote: onSaveQuote
+                        ForEach(Array(document.elements.enumerated()), id: \.offset) { index, element in
+                            QuoteSelectableElementView(
+                                id: index,
+                                isEnabled: isQuoteSelectionActive && element.quotePlainText != nil,
+                                isSelected: selectedQuoteElementIDs.contains(index),
+                                onSelect: onSelectQuoteElement,
+                                onDragSelect: onDragSelectQuoteElement
+                            ) {
+                                DocumentElementView(
+                                    element: element,
+                                    showsImages: showsImages,
+                                    readerSettings: readerSettings,
+                                    onOpenLink: onOpenLink,
+                                    onOpenExternalLink: onOpenExternalLink,
+                                    onSaveImage: onSaveImage,
+                                    onSaveQuote: onSaveQuote
+                                )
+                            }
+                            .id(DocumentFindTarget.element(index))
+                            .findTargetHighlight(selectedFindTarget == .element(index))
+                        }
+                    }
+                    .background(
+                        GeometryReader { contentProxy in
+                            Color.clear.preference(
+                                key: ReaderScrollMetricsPreferenceKey.self,
+                                value: ReaderScrollMetrics(
+                                    offset: -contentProxy.frame(in: .named("Plain.ReaderScroll")).minY,
+                                    contentHeight: contentProxy.size.height,
+                                    viewportHeight: viewportProxy.size.height
+                                )
                             )
                         }
-                        .id(DocumentFindTarget.element(index))
-                        .findTargetHighlight(selectedFindTarget == .element(index))
-                    }
+                    )
+                    .frame(maxWidth: contentMaxWidth, alignment: .leading)
+                    .padding(.horizontal, 42)
+                    .padding(.top, 50 + topChromeInset)
+                    .padding(.bottom, 86)
+                    .frame(maxWidth: .infinity, alignment: .center)
                 }
-                .frame(maxWidth: contentMaxWidth, alignment: .leading)
-                .padding(.horizontal, 42)
-                .padding(.top, 50 + topChromeInset)
-                .padding(.bottom, 86)
-                .frame(maxWidth: .infinity, alignment: .center)
+                .coordinateSpace(name: "Plain.ReaderScroll")
+                .overlay(alignment: .top) {
+                    ReaderProgressLine(progress: readingProgress)
+                        .padding(.top, topChromeInset)
+                }
+                .onPreferenceChange(ReaderScrollMetricsPreferenceKey.self) { metrics in
+                    let progress = metrics.progress
+                    readingProgress = progress
+                    onReadingProgressChange(progress)
+                }
             }
             .background(readerBackground)
             .environment(
@@ -117,10 +145,23 @@ struct DocumentView: View {
                     .padding(.top, 4)
             }
 
+            if document.extractionQuality != .strong {
+                ExtractionFeedbackPanel(quality: document.extractionQuality, onReportIssue: onReportIssue)
+            }
+
             Divider()
                 .padding(.top, 10)
         }
         .padding(.bottom, 10)
+    }
+
+    private var estimatedReadingMinutes: Int {
+        let wordCount = document.elements
+            .compactMap(\.quotePlainText)
+            .joined(separator: " ")
+            .split(whereSeparator: \.isWhitespace)
+            .count
+        return max(1, Int(ceil(Double(wordCount) / 225.0)))
     }
 
     private var metadata: some View {
@@ -136,6 +177,8 @@ struct DocumentView: View {
 
     private var metadataChips: some View {
         HStack(spacing: 8) {
+            MetadataChip(text: "\(estimatedReadingMinutes) min read", systemName: "clock")
+
             if let siteName = document.siteName {
                 MetadataChip(text: siteName, systemName: "building.2")
             }
@@ -160,6 +203,93 @@ struct DocumentView: View {
             if !showsImages, !document.images.isEmpty {
                 MetadataChip(text: "Images hidden", systemName: "photo")
             }
+        }
+    }
+}
+
+private struct ReaderScrollMetrics: Equatable {
+    var offset: CGFloat = 0
+    var contentHeight: CGFloat = 1
+    var viewportHeight: CGFloat = 1
+
+    var progress: Double {
+        let scrollableHeight = max(contentHeight - viewportHeight, 1)
+        return Double(min(1, max(0, offset / scrollableHeight)))
+    }
+}
+
+private struct ReaderScrollMetricsPreferenceKey: PreferenceKey {
+    static let defaultValue = ReaderScrollMetrics()
+
+    static func reduce(value: inout ReaderScrollMetrics, nextValue: () -> ReaderScrollMetrics) {
+        value = nextValue()
+    }
+}
+
+private struct ReaderProgressLine: View {
+    var progress: Double
+
+    var body: some View {
+        GeometryReader { proxy in
+            ZStack(alignment: .leading) {
+                Rectangle()
+                    .fill(Color(nsColor: .separatorColor).opacity(0.18))
+                Rectangle()
+                    .fill(Color.accentColor.opacity(0.62))
+                    .frame(width: proxy.size.width * min(1, max(0, progress)))
+            }
+        }
+        .frame(height: 2)
+        .accessibilityLabel("Reader progress \(Int(min(1, max(0, progress)) * 100)) percent")
+    }
+}
+
+private struct ExtractionFeedbackPanel: View {
+    var quality: ExtractionQuality
+    var onReportIssue: () -> Void
+
+    var body: some View {
+        HStack(alignment: .center, spacing: 12) {
+            Image(systemName: quality == .weak ? "exclamationmark.triangle" : "wand.and.stars")
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(quality == .weak ? Color(nsColor: .systemOrange) : Color.accentColor)
+                .frame(width: 30, height: 30)
+                .background(Color(nsColor: .controlBackgroundColor).opacity(0.82), in: RoundedRectangle(cornerRadius: 7))
+
+            VStack(alignment: .leading, spacing: 3) {
+                Text(title)
+                    .font(.subheadline.weight(.semibold))
+                Text("If the page looks wrong, send a prefilled report so the extractor can learn from this URL.")
+                    .font(.caption.weight(.medium))
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            Spacer(minLength: 12)
+
+            Button {
+                onReportIssue()
+            } label: {
+                Label("Report", systemImage: "envelope")
+            }
+            .buttonStyle(.bordered)
+        }
+        .padding(14)
+        .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 8))
+        .overlay {
+            RoundedRectangle(cornerRadius: 8)
+                .stroke(Color(nsColor: .separatorColor).opacity(0.35), lineWidth: 1)
+        }
+    }
+
+    private var title: String {
+        switch quality {
+        case .strong:
+            return "Extraction looks solid"
+        case .fallback:
+            return "Simplified fallback extraction"
+        case .weak:
+            return "Low-confidence extraction"
         }
     }
 }

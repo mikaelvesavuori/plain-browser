@@ -377,6 +377,36 @@ final class BrowserViewModel: ObservableObject {
         setStatus("Removed from Later")
     }
 
+    func updateLaterTags(_ item: LaterItem, tags: [String]) {
+        guard let index = laterItems.firstIndex(where: { $0.url == item.url }) else {
+            return
+        }
+
+        laterItems[index] = laterItems[index].withTags(tags)
+        laterStore.save(laterItems)
+        setStatus("Later tags updated")
+    }
+
+    func updateCurrentReadingProgress(_ progress: Double) {
+        guard let currentURL else {
+            return
+        }
+
+        let normalized = PlainNewsArticle.normalizedURLString(currentURL)
+        guard let index = laterItems.firstIndex(where: { PlainNewsArticle.normalizedURLString($0.url) == normalized }) else {
+            return
+        }
+
+        let clamped = LaterItem.clampedProgress(progress)
+        guard abs(laterItems[index].readingProgress - clamped) >= 0.01 ||
+            laterItems[index].lastReadAt == nil else {
+            return
+        }
+
+        laterItems[index] = laterItems[index].withReadingProgress(clamped)
+        laterStore.save(laterItems)
+    }
+
     func clearLater() {
         laterItems = []
         clearLaterNavigation()
@@ -460,6 +490,16 @@ final class BrowserViewModel: ObservableObject {
     func copyQuote(_ item: QuoteItem) {
         copyToPasteboard(markdown(for: item))
         setStatus("Quote copied")
+    }
+
+    func updateQuoteMetadata(_ item: QuoteItem, note: String?, tags: [String]) {
+        guard let index = quoteItems.firstIndex(where: { $0.id == item.id }) else {
+            return
+        }
+
+        quoteItems[index] = quoteItems[index].withMetadata(note: note, tags: tags)
+        quoteStore.save(quoteItems)
+        setStatus("Quote updated")
     }
 
     func exportQuotes() {
@@ -684,6 +724,41 @@ final class BrowserViewModel: ObservableObject {
         }
     }
 
+    func importLater() {
+        let panel = NSOpenPanel()
+        panel.title = "Import Later"
+        panel.allowsMultipleSelection = false
+        panel.canChooseDirectories = false
+        if let markdownType = UTType(filenameExtension: "md") {
+            panel.allowedContentTypes = [markdownType, .plainText]
+        } else {
+            panel.allowedContentTypes = [.plainText]
+        }
+
+        guard panel.runModal() == .OK,
+              let url = panel.url else {
+            return
+        }
+
+        do {
+            let text = try String(contentsOf: url, encoding: .utf8)
+            let imported = importedLaterItems(from: text)
+            guard !imported.isEmpty else {
+                setStatus("No links found")
+                return
+            }
+
+            var values = laterItems
+            for item in imported.reversed() {
+                values = laterStore.add(item, to: values)
+            }
+            laterItems = values
+            setStatus("Imported \(imported.count) Later item\(imported.count == 1 ? "" : "s")")
+        } catch {
+            setStatus("Could not import Later")
+        }
+    }
+
     func clearCache() {
         do {
             try imageCache.clear()
@@ -787,11 +862,15 @@ final class BrowserViewModel: ObservableObject {
     }
 
     private func markdown(for item: QuoteItem) -> String {
-        """
+        let note = item.note.map { "\n\nNote: \($0)" } ?? ""
+        let tags = item.tags.isEmpty ? "" : "\nTags: \(item.tags.map { "#\($0)" }.joined(separator: " "))"
+
+        return """
         \(markdownQuoteText(item.text))
 
         Source: [\(item.sourceTitle ?? item.sourceURL.absoluteString)](\(item.sourceURL.absoluteString))
         Saved: \(item.savedAt.formatted(date: .abbreviated, time: .shortened))
+        \(note)\(tags)
         """
     }
 
@@ -909,6 +988,9 @@ final class BrowserViewModel: ObservableObject {
         case .loaded(let document):
             pageDetails.append("title: \(document.title ?? "Untitled")")
             pageDetails.append("extraction quality: \(document.extractionQuality.rawValue)")
+            pageDetails.append("elements: \(document.elements.count)")
+            pageDetails.append("images: \(document.images.count)")
+            pageDetails.append("headings: \(document.elements.headingCount)")
         case .failed(let failure):
             pageDetails.append("failure: \(failure.title)")
             pageDetails.append("message: \(failure.message)")
@@ -958,8 +1040,10 @@ final class BrowserViewModel: ObservableObject {
             let label = (trimmedTitle?.isEmpty == false ? trimmedTitle! : fallbackTitle)
                 .replacingOccurrences(of: "[", with: "\\[")
                 .replacingOccurrences(of: "]", with: "\\]")
+            let tags = item.tags.isEmpty ? "" : " \(item.tags.map { "#\($0)" }.joined(separator: " "))"
+            let progress = item.readingProgress > 0 ? " <!-- plain-progress:\(String(format: "%.2f", item.readingProgress)) -->" : ""
 
-            return "- [\(label)](\(item.url.absoluteString))"
+            return "- [\(label)](\(item.url.absoluteString))\(tags)\(progress)"
         }
 
         return """
@@ -968,6 +1052,87 @@ final class BrowserViewModel: ObservableObject {
         \(rows.joined(separator: "\n"))
 
         """
+    }
+
+    private func importedLaterItems(from text: String) -> [LaterItem] {
+        var items: [LaterItem] = []
+        var seen = Set<String>()
+        let markdownPattern = #"\[([^\]]+)\]\((https?://[^\s)]+)\)(.*)"#
+        let bareURLPattern = #"(https?://[^\s<>)]+)"#
+
+        for line in text.components(separatedBy: .newlines) {
+            let trimmed = line.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !trimmed.isEmpty else {
+                continue
+            }
+
+            let parsed: (title: String?, url: URL, trailing: String)?
+            if let match = regexMatch(pattern: markdownPattern, in: trimmed),
+               match.count >= 4,
+               let url = URL(string: match[2]) {
+                parsed = (match[1], url, match[3])
+            } else if let match = regexMatch(pattern: bareURLPattern, in: trimmed),
+                      match.count >= 2,
+                      let url = URL(string: match[1]) {
+                parsed = (nil, url, trimmed)
+            } else {
+                parsed = nil
+            }
+
+            guard let parsed else {
+                continue
+            }
+
+            let normalizedURL = PlainNewsArticle.normalizedURLString(parsed.url)
+            guard !seen.contains(normalizedURL) else {
+                continue
+            }
+            seen.insert(normalizedURL)
+
+            let tags = parsed.trailing
+                .split(whereSeparator: \.isWhitespace)
+                .map(String.init)
+                .filter { $0.hasPrefix("#") }
+            let progress = importedProgress(from: parsed.trailing)
+            items.append(LaterItem(
+                url: parsed.url,
+                title: parsed.title,
+                addedAt: Date(),
+                tags: tags,
+                readingProgress: progress
+            ))
+        }
+
+        return items
+    }
+
+    private func importedProgress(from value: String) -> Double {
+        guard let match = regexMatch(pattern: #"plain-progress:([0-9.]+)"#, in: value),
+              match.count >= 2,
+              let progress = Double(match[1]) else {
+            return 0
+        }
+
+        return LaterItem.clampedProgress(progress)
+    }
+
+    private func regexMatch(pattern: String, in value: String) -> [String]? {
+        guard let regex = try? NSRegularExpression(pattern: pattern) else {
+            return nil
+        }
+
+        let nsRange = NSRange(value.startIndex..<value.endIndex, in: value)
+        guard let match = regex.firstMatch(in: value, range: nsRange) else {
+            return nil
+        }
+
+        return (0..<match.numberOfRanges).map { index in
+            let range = match.range(at: index)
+            guard let swiftRange = Range(range, in: value) else {
+                return ""
+            }
+            return String(value[swiftRange])
+        }
     }
 
     private func setStatus(_ message: String) {
@@ -993,5 +1158,17 @@ final class BrowserViewModel: ObservableObject {
         }
 
         return URL(string: "https://\(trimmed)")
+    }
+}
+
+private extension Array where Element == DocumentElement {
+    var headingCount: Int {
+        filter { element in
+            if case .heading = element {
+                return true
+            }
+            return false
+        }
+        .count
     }
 }
