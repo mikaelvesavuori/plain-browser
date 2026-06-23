@@ -70,20 +70,24 @@ public struct PlainNewsReturnNavigation: Equatable, Sendable {
     public private(set) var isPending: Bool
     public private(set) var documentIndex: Int?
     public private(set) var isReturningFromFailure: Bool
+    public private(set) var returnAnchorID: String?
 
     public init(
         isPending: Bool = false,
         documentIndex: Int? = nil,
-        isReturningFromFailure: Bool = false
+        isReturningFromFailure: Bool = false,
+        returnAnchorID: String? = nil
     ) {
         self.isPending = isPending
         self.documentIndex = documentIndex
         self.isReturningFromFailure = isReturningFromFailure
+        self.returnAnchorID = returnAnchorID
     }
 
-    public mutating func prepareForOpen() {
+    public mutating func prepareForOpen(returnAnchorID: String? = nil) {
         isPending = true
         isReturningFromFailure = false
+        self.returnAnchorID = returnAnchorID
     }
 
     public mutating func completeLoad(documentIndex: Int) {
@@ -115,9 +119,17 @@ public struct PlainNewsReturnNavigation: Equatable, Sendable {
         isReturningFromFailure = false
     }
 
+    public mutating func clearReturnAnchor(_ id: String) {
+        guard returnAnchorID == id else {
+            return
+        }
+        returnAnchorID = nil
+    }
+
     public mutating func clear() {
         isPending = false
         documentIndex = nil
         isReturningFromFailure = false
+        returnAnchorID = nil
     }
 }

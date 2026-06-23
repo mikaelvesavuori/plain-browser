@@ -66,13 +66,14 @@ final class PlainReadingNavigationStateTests: XCTestCase {
     func testNewsReturnNavigationTracksLoadedDocument() {
         var navigation = PlainNewsReturnNavigation()
 
-        navigation.prepareForOpen()
+        navigation.prepareForOpen(returnAnchorID: "article-3")
         navigation.completeLoad(documentIndex: 3)
 
         XCTAssertFalse(navigation.isPending)
         XCTAssertTrue(navigation.canReturnFromLoadedDocument(currentIndex: 3))
         XCTAssertFalse(navigation.canReturnFromLoadedDocument(currentIndex: 2))
         XCTAssertFalse(navigation.canReturnFromFailure)
+        XCTAssertEqual(navigation.returnAnchorID, "article-3")
     }
 
     func testNewsReturnNavigationTracksFailedLoad() {
@@ -86,6 +87,17 @@ final class PlainReadingNavigationStateTests: XCTestCase {
 
         navigation.clearFailureReturn()
         XCTAssertFalse(navigation.canReturnFromFailure)
+    }
+
+    func testNewsReturnNavigationClearsMatchingReturnAnchor() {
+        var navigation = PlainNewsReturnNavigation()
+
+        navigation.prepareForOpen(returnAnchorID: "article-3")
+        navigation.clearReturnAnchor("article-2")
+        XCTAssertEqual(navigation.returnAnchorID, "article-3")
+
+        navigation.clearReturnAnchor("article-3")
+        XCTAssertNil(navigation.returnAnchorID)
     }
 
     func testClearingNewsReturnNavigationResetsState() {

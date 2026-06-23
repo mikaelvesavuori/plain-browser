@@ -1,3 +1,4 @@
+import AppKit
 import PlainCore
 import SwiftUI
 
@@ -29,26 +30,6 @@ private enum PlainNewsSourcePanelTab: String, CaseIterable {
     }
 }
 
-private enum PlainNewsDigestOrganization: String, CaseIterable, Hashable {
-    case source
-    case time
-
-    var label: String {
-        switch self {
-        case .source:
-            return "Source"
-        case .time:
-            return "Time"
-        }
-    }
-}
-
-private struct PlainNewsDigestSourceGroup: Identifiable {
-    var id: UUID
-    var sourceName: String
-    var items: [PlainNewsDigestItem]
-}
-
 struct PlainNewsView: View {
     var sources: [PlainNewsSource]
     @Binding var interestProfile: String
@@ -61,7 +42,10 @@ struct PlainNewsView: View {
     var aiStatus: PlainNewsAIStatus
     var isRunning: Bool
     var topChromeInset: CGFloat
-    var isItemSavedForLater: (PlainNewsDigestItem) -> Bool
+    var savedItemURLStrings: Set<String>
+    var scrollTargetID: String?
+    var scrollRestoreKey: String?
+    var scrollOffset: CGFloat
     var onAddSource: (String, String, PlainNewsSourceKind, [PlainNewsCategory]) -> Void
     var onAddPreset: (PlainNewsSource) -> Void
     var onToggleSource: (PlainNewsSource) -> Void
@@ -70,6 +54,7 @@ struct PlainNewsView: View {
     var onCancelRun: () -> Void
     var onClearDigest: () -> Void
     var onOpenItem: (PlainNewsDigestItem) -> Void
+    var onScrollOffsetChange: (CGFloat) -> Void
     var onSaveItemForLater: (PlainNewsDigestItem) -> Void
 
     @State private var sourceName = ""
@@ -81,6 +66,7 @@ struct PlainNewsView: View {
     @State private var sourceSearch = ""
     @State private var sourcePanelTab = PlainNewsSourcePanelTab.browse
     @State private var digestOrganization = PlainNewsDigestOrganization.source
+    @State private var restoredScrollKey: String?
 
     private var enabledSourceCount: Int {
         sources.filter(\.isEnabled).count
@@ -142,7 +128,7 @@ struct PlainNewsView: View {
 
     private var sourcePanel: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 18) {
+            LazyVStack(alignment: .leading, spacing: 18) {
                 VStack(alignment: .leading, spacing: 10) {
                     Picker("Source View", selection: $sourcePanelTab) {
                         ForEach(PlainNewsSourcePanelTab.allCases, id: \.self) { tab in
@@ -286,81 +272,141 @@ struct PlainNewsView: View {
     }
 
     private var digestPanel: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 18) {
-                HStack(alignment: .center) {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Plain News")
-                            .font(.system(size: 34, weight: .semibold, design: .serif))
-                        Text(digestSubtitle)
-                            .font(.subheadline.weight(.medium))
-                            .foregroundStyle(.secondary)
-                    }
+        ScrollViewReader { proxy in
+            ScrollView {
+                LazyVStack(alignment: .leading, spacing: 18) {
+                    HStack(alignment: .center) {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Plain News")
+                                .font(.system(size: 34, weight: .semibold, design: .serif))
+                            Text(digestSubtitle)
+                                .font(.subheadline.weight(.medium))
+                                .foregroundStyle(.secondary)
+                        }
 
-                    Spacer()
+                        Spacer()
+
+                        if hasRunSurface {
+                            Button {
+                                onClearDigest()
+                            } label: {
+                                Image(systemName: "xmark")
+                            }
+                            .buttonStyle(.borderless)
+                            .help("Close digest")
+                            .hoverIconButton(size: 28, cornerRadius: 7, isDestructive: true)
+                        }
+
+                        if isRunning {
+                            Button {
+                                onCancelRun()
+                            } label: {
+                                Label("Cancel", systemImage: "xmark.circle")
+                            }
+                            .buttonStyle(.bordered)
+                        } else {
+                            Button {
+                                onRun()
+                            } label: {
+                                Label("Run", systemImage: "sparkles")
+                            }
+                            .buttonStyle(.borderedProminent)
+                        }
+                    }
 
                     if hasRunSurface {
-                        Button {
-                            onClearDigest()
-                        } label: {
-                            Image(systemName: "xmark")
-                        }
-                        .buttonStyle(.borderless)
-                        .help("Close digest")
-                        .hoverIconButton(size: 28, cornerRadius: 7, isDestructive: true)
-                    }
-
-                    if isRunning {
-                        Button {
-                            onCancelRun()
-                        } label: {
-                            Label("Cancel", systemImage: "xmark.circle")
-                        }
-                        .buttonStyle(.bordered)
+                        runSummaryPanel
                     } else {
-                        Button {
-                            onRun()
-                        } label: {
-                            Label("Run", systemImage: "sparkles")
+                        timeWindowPanel
+                        resultLimitPanel
+                        interestsPanel
+                        aiStatusPanel
+                    }
+
+                    if let progress {
+                        PlainNewsProgressView(progress: progress)
+                    }
+
+                    if let digest, !digest.items.isEmpty {
+                        LazyVStack(alignment: .leading, spacing: 10) {
+                            digestOrganizationControl
+                            PlainNewsDigestItemsView(
+                                digest: digest,
+                                organization: digestOrganization,
+                                savedItemURLStrings: savedItemURLStrings,
+                                onOpenItem: onOpenItem,
+                                onSaveItemForLater: onSaveItemForLater
+                            )
+
+                            PlainNewsDonePanel(onClear: onClearDigest)
                         }
-                        .buttonStyle(.borderedProminent)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    } else if digest != nil {
+                        VStack(spacing: 10) {
+                            PlainNewsEmptyPanel(title: "Nothing surfaced", systemName: "checkmark.circle")
+                                .frame(maxWidth: .infinity, minHeight: 180, alignment: .leading)
+                            PlainNewsDonePanel(onClear: onClearDigest)
+                        }
                     }
                 }
-
-                if hasRunSurface {
-                    runSummaryPanel
-                } else {
-                    timeWindowPanel
-                    resultLimitPanel
-                    interestsPanel
-                    aiStatusPanel
-                }
-
-                if let progress {
-                    PlainNewsProgressView(progress: progress)
-                }
-
-                if let digest, !digest.items.isEmpty {
-                    VStack(alignment: .leading, spacing: 10) {
-                        digestOrganizationControl
-                        digestItemsView(for: digest)
-
-                        PlainNewsDonePanel(onClear: onClearDigest)
+                .frame(maxWidth: 860, alignment: .leading)
+                .background(
+                    PlainNewsScrollPositionBridge(
+                        restoreOffset: scrollOffset,
+                        restoreKey: scrollRestoreKey
+                    )
+                    .frame(width: 0, height: 0)
+                )
+                .background(
+                    GeometryReader { contentProxy in
+                        Color.clear.preference(
+                            key: PlainNewsScrollOffsetPreferenceKey.self,
+                            value: max(0, -contentProxy.frame(in: .named("Plain.NewsDigestScroll")).minY)
+                        )
                     }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                } else if digest != nil {
-                    VStack(spacing: 10) {
-                        PlainNewsEmptyPanel(title: "Nothing surfaced", systemName: "checkmark.circle")
-                            .frame(maxWidth: .infinity, minHeight: 180, alignment: .leading)
-                        PlainNewsDonePanel(onClear: onClearDigest)
-                    }
-                }
+                )
+                .padding(.horizontal, 38)
+                .padding(.top, 34 + topChromeInset)
+                .padding(.bottom, 56)
+                .frame(maxWidth: .infinity, alignment: .center)
             }
-            .frame(maxWidth: 860, alignment: .leading)
-            .padding(.horizontal, 38)
-            .padding(.top, 34 + topChromeInset)
-            .padding(.bottom, 56)
-            .frame(maxWidth: .infinity, alignment: .center)
+            .coordinateSpace(name: "Plain.NewsDigestScroll")
+            .onPreferenceChange(PlainNewsScrollOffsetPreferenceKey.self) { offset in
+                onScrollOffsetChange(offset)
+            }
+            .onAppear {
+                restoreScrollTarget(with: proxy)
+            }
+            .onChange(of: scrollTargetID) { _, _ in
+                restoreScrollTarget(with: proxy)
+            }
+        }
+    }
+
+    private func restoreScrollTarget(with proxy: ScrollViewProxy) {
+        guard scrollOffset <= 1 else {
+            return
+        }
+        guard let scrollTargetID else {
+            return
+        }
+        guard let scrollRestoreKey else {
+            return
+        }
+        guard restoredScrollKey != scrollRestoreKey else {
+            return
+        }
+
+        restoredScrollKey = scrollRestoreKey
+
+        DispatchQueue.main.async {
+            proxy.scrollTo(scrollTargetID, anchor: .center)
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+            proxy.scrollTo(scrollTargetID, anchor: .center)
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.16) {
+            proxy.scrollTo(scrollTargetID, anchor: .center)
         }
     }
 
@@ -382,73 +428,6 @@ struct PlainNewsView: View {
             .fixedSize()
         }
         .frame(maxWidth: .infinity, minHeight: 32, alignment: .trailing)
-    }
-
-    @ViewBuilder
-    private func digestItemsView(for digest: PlainNewsDigest) -> some View {
-        switch digestOrganization {
-        case .time:
-            ForEach(timeOrderedDigestItems(digest.items)) { item in
-                digestRow(for: item)
-            }
-        case .source:
-            VStack(spacing: 22) {
-                ForEach(sourceGroups(from: digest.items)) { group in
-                    PlainNewsDigestSourceGroupView(group: group) { item in
-                        onOpenItem(item)
-                    } onSaveForLater: { item in
-                        onSaveItemForLater(item)
-                    } isSavedForLater: { item in
-                        isItemSavedForLater(item)
-                    }
-                }
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-        }
-    }
-
-    private func digestRow(for item: PlainNewsDigestItem) -> some View {
-        PlainNewsDigestRow(item: item) {
-            onOpenItem(item)
-        } onSaveForLater: {
-            onSaveItemForLater(item)
-        } isSavedForLater: {
-            isItemSavedForLater(item)
-        }
-    }
-
-    private func timeOrderedDigestItems(_ items: [PlainNewsDigestItem]) -> [PlainNewsDigestItem] {
-        items.sorted { left, right in
-            articleDate(for: left) > articleDate(for: right)
-        }
-    }
-
-    private func sourceGroups(from items: [PlainNewsDigestItem]) -> [PlainNewsDigestSourceGroup] {
-        Dictionary(grouping: items) { item in
-            item.article.sourceID
-        }
-        .map { sourceID, values in
-            let sortedItems = timeOrderedDigestItems(values)
-            return PlainNewsDigestSourceGroup(
-                id: sourceID,
-                sourceName: sortedItems.first?.article.sourceName ?? "Source",
-                items: sortedItems
-            )
-        }
-        .sorted { left, right in
-            let comparison = left.sourceName.localizedStandardCompare(right.sourceName)
-            if comparison == .orderedSame {
-                return articleDate(for: left.items.first) > articleDate(for: right.items.first)
-            }
-            return comparison == .orderedAscending
-        }
-    }
-
-    private func articleDate(for item: PlainNewsDigestItem?) -> Date {
-        guard let item else {
-            return .distantPast
-        }
-        return item.article.publishedAt ?? item.article.observedAt
     }
 
     private var timeWindowPanel: some View {
@@ -928,219 +907,98 @@ struct PlainNewsPresetRow: View {
     }
 }
 
-private struct PlainNewsDigestSourceGroupView: View {
-    var group: PlainNewsDigestSourceGroup
-    var onOpen: (PlainNewsDigestItem) -> Void
-    var onSaveForLater: (PlainNewsDigestItem) -> Void
-    var isSavedForLater: (PlainNewsDigestItem) -> Bool
+private struct PlainNewsScrollPositionBridge: NSViewRepresentable {
+    var restoreOffset: CGFloat
+    var restoreKey: String?
 
-    var body: some View {
-        VStack(alignment: .leading, spacing: 9) {
-            HStack(alignment: .firstTextBaseline, spacing: 8) {
-                Label(group.sourceName, systemImage: "tray.full")
-                    .font(.subheadline.weight(.bold))
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
+    func makeCoordinator() -> Coordinator {
+        Coordinator()
+    }
 
-                Text("\(group.items.count)")
-                    .font(.caption.monospacedDigit().weight(.semibold))
-                    .foregroundStyle(.tertiary)
+    func makeNSView(context: Context) -> NSView {
+        NSView(frame: .zero)
+    }
 
-                Spacer()
+    func updateNSView(_ nsView: NSView, context: Context) {
+        context.coordinator.restoreOffset = restoreOffset
+        context.coordinator.restoreKey = restoreKey
+        let coordinator = context.coordinator
+
+        Task { @MainActor [weak coordinator, weak nsView] in
+            guard let coordinator, let nsView else {
+                return
             }
-            .padding(.horizontal, 2)
+            coordinator.attach(from: nsView)
+            coordinator.restoreIfNeeded()
+        }
+    }
 
-            VStack(spacing: 8) {
-                ForEach(group.items) { item in
-                    PlainNewsDigestRow(item: item, showsSourceName: false) {
-                        onOpen(item)
-                    } onSaveForLater: {
-                        onSaveForLater(item)
-                    } isSavedForLater: {
-                        isSavedForLater(item)
+    @MainActor
+    final class Coordinator: NSObject, @unchecked Sendable {
+        var restoreOffset: CGFloat = 0
+        var restoreKey: String?
+
+        private weak var scrollView: NSScrollView?
+        private var restoredKey: String?
+
+        func attach(from view: NSView) {
+            guard let scrollView = view.enclosingScrollView else {
+                return
+            }
+            guard self.scrollView !== scrollView else {
+                return
+            }
+
+            self.scrollView = scrollView
+        }
+
+        func restoreIfNeeded() {
+            guard let restoreKey else {
+                restoredKey = nil
+                return
+            }
+            guard restoredKey != restoreKey else {
+                return
+            }
+
+            restoredKey = restoreKey
+            for delay in [0.0, 0.05, 0.16, 0.32] {
+                Task { @MainActor [weak self] in
+                    if delay > 0 {
+                        try? await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
                     }
+                    self?.restoreOffsetIfPossible()
                 }
             }
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.top, 4)
+
+        private func restoreOffsetIfPossible() {
+            guard restoreOffset > 1,
+                  let scrollView,
+                  let documentView = scrollView.documentView else {
+                return
+            }
+
+            let clipView = scrollView.contentView
+            let viewportHeight = clipView.bounds.height
+            let documentHeight = max(documentView.frame.height, documentView.bounds.height)
+            let maxOffset = max(0, documentHeight - viewportHeight)
+            let yOffset = min(max(0, restoreOffset), maxOffset)
+            guard yOffset > 1 else {
+                return
+            }
+
+            clipView.scroll(to: NSPoint(x: clipView.bounds.origin.x, y: yOffset))
+            scrollView.reflectScrolledClipView(clipView)
+        }
     }
 }
 
-struct PlainNewsDigestRow: View {
-    var item: PlainNewsDigestItem
-    var showsSourceName = true
-    var onOpen: () -> Void
-    var onSaveForLater: () -> Void
-    var isSavedForLater: () -> Bool
+private struct PlainNewsScrollOffsetPreferenceKey: PreferenceKey {
+    static let defaultValue: CGFloat = 0
 
-    @State private var isHovering = false
-
-    var body: some View {
-        HStack(alignment: .top, spacing: 13) {
-            VStack(alignment: .leading, spacing: 7) {
-                HStack(spacing: 8) {
-                    if showsSourceName {
-                        Text(item.article.sourceName)
-                            .font(.caption.weight(.bold))
-                            .foregroundStyle(.secondary)
-                            .lineLimit(1)
-                    }
-
-                    if let publishedAt = item.article.publishedAt {
-                        Text(publishedAt.formatted(date: .abbreviated, time: .shortened))
-                            .font(.caption)
-                            .foregroundStyle(.tertiary)
-                            .lineLimit(1)
-                    }
-
-                    PlainNewsSelectionScoreView(item: item)
-                }
-
-                VStack(alignment: .leading, spacing: 7) {
-                    Text(item.article.title)
-                        .font(.headline)
-                        .foregroundStyle(.primary)
-                        .lineLimit(2)
-
-                    Text(item.assessment.summary)
-                        .font(.callout)
-                        .foregroundStyle(.secondary)
-                        .lineLimit(3)
-                }
-                .contentShape(Rectangle())
-                .onTapGesture {
-                    onOpen()
-                }
-                .pointingHandCursor()
-            }
-
-            Spacer(minLength: 8)
-
-            HStack(spacing: 6) {
-                Button {
-                    onSaveForLater()
-                } label: {
-                    Image(systemName: isSavedForLater() ? "checkmark" : "plus")
-                        .font(.caption.weight(.bold))
-                        .foregroundStyle(isSavedForLater() ? Color.green : Color(nsColor: .secondaryLabelColor))
-                        .frame(width: 28, height: 28)
-                        .background(Color(nsColor: .textBackgroundColor).opacity(0.86), in: RoundedRectangle(cornerRadius: 7))
-                }
-                .buttonStyle(.plain)
-                .disabled(isSavedForLater())
-                .help(isSavedForLater() ? "Saved to Later" : "Save to Later")
-                .hoverIconButton(size: 28, cornerRadius: 7)
-
-                Button {
-                    onOpen()
-                } label: {
-                    Image(systemName: "arrow.up.right")
-                        .font(.caption.weight(.bold))
-                        .foregroundStyle(.secondary)
-                        .frame(width: 28, height: 28)
-                        .background(Color(nsColor: .textBackgroundColor).opacity(0.86), in: RoundedRectangle(cornerRadius: 7))
-                }
-                .buttonStyle(.plain)
-                .help("Open")
-                .hoverIconButton(size: 28, cornerRadius: 7)
-            }
-            .padding(.top, 1)
-        }
-        .padding(14)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            isHovering ? Color.accentColor.opacity(0.07) : Color(nsColor: .controlBackgroundColor).opacity(0.72),
-            in: RoundedRectangle(cornerRadius: 8)
-        )
-        .overlay {
-            RoundedRectangle(cornerRadius: 8)
-                .stroke(Color(nsColor: .separatorColor).opacity(isHovering ? 0.6 : 0.38), lineWidth: 1)
-        }
-        .shadow(color: .black.opacity(isHovering ? 0.06 : 0), radius: 10, y: 4)
-        .onHover { isHovering = $0 }
-    }
-}
-
-private struct PlainNewsSelectionScoreView: View {
-    var item: PlainNewsDigestItem
-
-    @State private var showsDetails = false
-
-    var body: some View {
-        Button {
-            showsDetails.toggle()
-        } label: {
-            Label("\(item.assessment.relevance)/5", systemImage: "info.circle")
-                .font(.caption.weight(.semibold))
-                .foregroundStyle(.secondary)
-                .labelStyle(.titleAndIcon)
-                .padding(.horizontal, 6)
-                .padding(.vertical, 3)
-                .background(Color(nsColor: .textBackgroundColor).opacity(0.82), in: RoundedRectangle(cornerRadius: 6))
-        }
-        .buttonStyle(.plain)
-        .help("Selection details")
-        .popover(isPresented: $showsDetails, arrowEdge: .bottom) {
-            selectionDetailsPanel
-                .frame(width: 300, alignment: .leading)
-        }
-        .onHover { isHovering in
-            if isHovering {
-                showsDetails = true
-            }
-        }
-    }
-
-    private var selectionDetailsPanel: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack(alignment: .center) {
-                Text("Selection details")
-                    .font(.headline)
-
-                Spacer()
-
-                Button {
-                    showsDetails = false
-                } label: {
-                    Image(systemName: "xmark")
-                        .font(.caption.weight(.bold))
-                        .foregroundStyle(.secondary)
-                        .frame(width: 24, height: 24)
-                }
-                .buttonStyle(.plain)
-                .help("Close")
-            }
-
-            HStack(alignment: .firstTextBaseline) {
-                Text("Relevance")
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(.secondary)
-                Spacer()
-                Text("\(item.assessment.relevance)/5")
-                    .font(.caption.monospacedDigit().weight(.bold))
-                    .foregroundStyle(.primary)
-            }
-
-            Text(item.assessment.reason)
-                .font(.callout)
-                .foregroundStyle(.primary)
-                .fixedSize(horizontal: false, vertical: true)
-
-            if !item.assessment.topics.isEmpty {
-                HStack(spacing: 5) {
-                    ForEach(Array(item.assessment.topics.prefix(5)), id: \.self) { topic in
-                        Text("#\(topic)")
-                            .font(.caption2.weight(.semibold))
-                            .foregroundStyle(.secondary)
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 3)
-                            .background(Color(nsColor: .controlBackgroundColor), in: RoundedRectangle(cornerRadius: 5))
-                    }
-                }
-            }
-        }
-        .padding(12)
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = nextValue()
     }
 }
 

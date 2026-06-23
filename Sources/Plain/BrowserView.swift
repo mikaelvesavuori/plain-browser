@@ -522,9 +522,11 @@ struct BrowserView: View {
         .frame(maxWidth: .infinity)
         .background(.regularMaterial)
         .overlay(alignment: .bottom) {
-            Rectangle()
-                .fill(Color(nsColor: .separatorColor).opacity(0.5))
-                .frame(height: 1)
+            if !isShowingNews {
+                Rectangle()
+                    .fill(Color(nsColor: .separatorColor).opacity(0.5))
+                    .frame(height: 1)
+            }
         }
         .shadow(color: .black.opacity(isToolbarVisible ? 0.08 : 0), radius: 18, y: 6)
     }
@@ -712,7 +714,10 @@ struct BrowserView: View {
                 aiStatus: viewModel.newsAIStatus,
                 isRunning: viewModel.isNewsRunning,
                 topChromeInset: toolbarContentInset,
-                isItemSavedForLater: viewModel.isNewsItemInLater,
+                savedItemURLStrings: viewModel.laterURLStrings,
+                scrollTargetID: viewModel.newsReturnScrollTargetID,
+                scrollRestoreKey: viewModel.newsReturnScrollRestoreKey,
+                scrollOffset: viewModel.newsReturnScrollOffset,
                 onAddSource: viewModel.addNewsSource,
                 onAddPreset: viewModel.addNewsPreset,
                 onToggleSource: viewModel.toggleNewsSource,
@@ -721,6 +726,7 @@ struct BrowserView: View {
                 onCancelRun: viewModel.cancelPlainNews,
                 onClearDigest: viewModel.clearNewsDigest,
                 onOpenItem: viewModel.openNewsItem,
+                onScrollOffsetChange: viewModel.updateNewsScrollOffset,
                 onSaveItemForLater: viewModel.saveNewsItemForLater
             )
         case .quotes:

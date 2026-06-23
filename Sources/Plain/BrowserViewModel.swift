@@ -63,6 +63,9 @@ final class BrowserViewModel: ObservableObject {
     private let exporter = DocumentTextExporter()
     private let updateChecker = ReleaseUpdateChecker()
     private var newsReturnNavigation = PlainNewsReturnNavigation()
+    private var newsScrollOffset: CGFloat = 0
+    private var newsPendingScrollRestoreOffset: CGFloat?
+    private var newsScrollRestoreCounter = 0
     private var laterReadingSequence = PlainLaterReadingSequence()
     private var newsTask: Task<Void, Never>?
     private var didHandleStartupArguments = false
@@ -550,6 +553,33 @@ final class BrowserViewModel: ObservableObject {
         isURLInLater(item.article.url)
     }
 
+    var laterURLStrings: Set<String> {
+        Set(laterItems.map { PlainNewsArticle.normalizedURLString($0.url) })
+    }
+
+    var newsReturnScrollTargetID: String? {
+        newsReturnNavigation.returnAnchorID
+    }
+
+    var newsReturnScrollRestoreKey: String? {
+        guard let returnAnchorID = newsReturnNavigation.returnAnchorID else {
+            return nil
+        }
+        return "\(newsScrollRestoreCounter)-\(returnAnchorID)"
+    }
+
+    var newsReturnScrollOffset: CGFloat {
+        newsPendingScrollRestoreOffset ?? newsScrollOffset
+    }
+
+    func updateNewsScrollOffset(_ offset: CGFloat) {
+        let normalizedOffset = max(0, offset)
+        newsScrollOffset = normalizedOffset
+        if normalizedOffset > 1 {
+            newsPendingScrollRestoreOffset = nil
+        }
+    }
+
     func saveNewsItemForLater(_ item: PlainNewsDigestItem) {
         guard !isNewsItemInLater(item) else {
             setStatus("Already saved for Later")
@@ -626,6 +656,8 @@ final class BrowserViewModel: ObservableObject {
         newsDigest = nil
         newsProgress = nil
         newsErrorMessage = nil
+        newsScrollOffset = 0
+        newsPendingScrollRestoreOffset = nil
     }
 
     func runPlainNews() {
@@ -648,6 +680,8 @@ final class BrowserViewModel: ObservableObject {
         isNewsRunning = true
         newsDigest = nil
         newsErrorMessage = nil
+        newsScrollOffset = 0
+        newsPendingScrollRestoreOffset = nil
         newsProgress = PlainNewsProgress(stage: .collecting, message: "Collecting sources", completed: 0, total: enabledSources.count)
         state = .news
 
@@ -692,7 +726,9 @@ final class BrowserViewModel: ObservableObject {
     }
 
     func openNewsItem(_ item: PlainNewsDigestItem) {
-        newsReturnNavigation.prepareForOpen()
+        newsPendingScrollRestoreOffset = newsScrollOffset
+        newsScrollRestoreCounter += 1
+        newsReturnNavigation.prepareForOpen(returnAnchorID: item.id)
         openLink(item.article.url)
     }
 
@@ -924,6 +960,8 @@ final class BrowserViewModel: ObservableObject {
 
     private func clearNewsReturn() {
         newsReturnNavigation.clear()
+        newsPendingScrollRestoreOffset = nil
+        newsScrollRestoreCounter = 0
     }
 
     private var laterURLs: [URL] {
