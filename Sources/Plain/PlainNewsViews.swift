@@ -111,14 +111,16 @@ struct PlainNewsView: View {
 
     var body: some View {
         HStack(spacing: 0) {
-            sourcePanel
-                .frame(width: 370)
-                .background(Color(nsColor: .controlBackgroundColor).opacity(0.62))
-                .overlay(alignment: .trailing) {
-                    Rectangle()
-                        .fill(Color(nsColor: .separatorColor).opacity(0.45))
-                        .frame(width: 1)
-                }
+            if !hasRunSurface {
+                sourcePanel
+                    .frame(width: 370)
+                    .background(Color(nsColor: .controlBackgroundColor).opacity(0.62))
+                    .overlay(alignment: .trailing) {
+                        Rectangle()
+                            .fill(Color(nsColor: .separatorColor).opacity(0.45))
+                            .frame(width: 1)
+                    }
+            }
 
             digestPanel
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -283,6 +285,7 @@ struct PlainNewsView: View {
                                 .font(.subheadline.weight(.medium))
                                 .foregroundStyle(.secondary)
                         }
+                        .id("PlainNewsTopMarker")
 
                         Spacer()
 
@@ -379,6 +382,10 @@ struct PlainNewsView: View {
             }
             .onChange(of: scrollTargetID) { _, _ in
                 restoreScrollTarget(with: proxy)
+            }
+            .onChange(of: digest) { _, newValue in
+                guard newValue == nil else { return }
+                proxy.scrollTo("PlainNewsTopMarker", anchor: .top)
             }
         }
     }
